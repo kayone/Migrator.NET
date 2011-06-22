@@ -400,7 +400,6 @@ namespace Migrator.Providers
 
 		/// <summary>
 		/// Guesses the name of the foreign key and add it
-		/// </see>
 		/// </summary>
 		public virtual void GenerateForeignKey(string primaryTable, string[] primaryColumns, string refTable,
 		                                       string[] refColumns)
@@ -420,7 +419,6 @@ namespace Migrator.Providers
 
 		/// <summary>
 		/// Guesses the name of the foreign key and add it
-		/// </see>
 		/// </summary>
 		public virtual void GenerateForeignKey(string primaryTable, string[] primaryColumns, string refTable,
 		                                       string[] refColumns, ForeignKeyConstraint constraint)

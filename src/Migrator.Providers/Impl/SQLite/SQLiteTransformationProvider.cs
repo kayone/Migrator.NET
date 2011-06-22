@@ -7,7 +7,13 @@ using ForeignKeyConstraint = Migrator.Framework.ForeignKeyConstraint;
 using SqliteConnection = System.Data.SQLite.SQLiteConnection;
 
 #else
-using Mono.Data.Sqlite;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SQLite;
+using Migrator.Framework;
+using ForeignKeyConstraint = Migrator.Framework.ForeignKeyConstraint;
+
 #endif
 
 namespace Migrator.Providers.SQLite
@@ -20,7 +26,7 @@ namespace Migrator.Providers.SQLite
 		public SQLiteTransformationProvider(Dialect dialect, string connectionString)
 			: base(dialect, connectionString)
 		{
-			_connection = new SqliteConnection(_connectionString);
+			_connection = new SQLiteConnection(_connectionString);
 			_connection.ConnectionString = _connectionString;
 			_connection.Open();
 		}
@@ -212,7 +218,7 @@ namespace Migrator.Providers.SQLite
 
 			sqldef = sqldef.Replace(Environment.NewLine, " ");
 			int start = sqldef.IndexOf("(");
-			int end = sqldef.IndexOf(")");
+			int end = sqldef.LastIndexOf(")");
 
 			sqldef = sqldef.Substring(0, end);
 			sqldef = sqldef.Substring(start + 1);
