@@ -19,7 +19,7 @@ using Migrator.Framework;
 namespace Migrator.Providers.SqlServer
 {
 	/// <summary>
-	/// Migration transformations provider for Microsoft SQL Server.
+	/// Migration transformations provider for Microsoft SQL Server Compact Edition.
 	/// </summary>
 	public class SqlServerCeTransformationProvider : SqlServerTransformationProvider
 	{
@@ -43,6 +43,20 @@ namespace Migrator.Providers.SqlServer
 				return reader.Read();
 			}
 		}
+
+        public override bool TableExists(string table) {
+            string tableWithoutBrackets = this.RemoveBrackets(table);
+            string tableName = this.GetTableName(tableWithoutBrackets);
+            using (IDataReader reader = 
+                ExecuteQuery(String.Format("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='{0}'", tableName))) {
+                return reader.Read();
+            }
+        }
+
+        protected new string GetSchemaName(string longTableName)
+        {
+            throw new MigrationException("SQL CE does not support database schemas.");
+        }
 
 		public override void RenameColumn(string tableName, string oldColumnName, string newColumnName)
 		{
