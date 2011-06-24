@@ -12,7 +12,7 @@ Licensed under MPL 1.1 : http://www.mozilla.org/MPL/
 * PostgreSQL
 * SQLite (tested on Mono)
 * SQL Server (2000, 2005)
-* SQL Server CE (3.5)
+* SQL Server CE (4.0)
 
 == Untested Databases but in there
 * Oracle
