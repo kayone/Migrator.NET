@@ -132,6 +132,13 @@ namespace Migrator.Tests.Providers
 			Assert.IsTrue(_provider.TableExists("Test"));
 		}
 
+        [Test]
+        public void CanAddTableWithIdentity()
+        {
+            AddTableWithPrimaryKey();
+            Assert.IsTrue(_provider.TableExists("Test"));
+        }
+
 		[Test]
 		public void RemoveTable()
 		{
@@ -190,6 +197,7 @@ namespace Migrator.Tests.Providers
 			Assert.IsTrue(_provider.ColumnExists("TestTwo", "Test"));
 		}
 
+  
 		[Test]
 		public void ChangeColumn()
 		{

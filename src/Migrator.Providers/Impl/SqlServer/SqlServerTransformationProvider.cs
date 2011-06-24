@@ -154,5 +154,10 @@ namespace Migrator.Providers.SqlServer
 				+ "AND col.name = '{1}' AND col.id = object_id('{0}')",
 				table, column);
 		}
+
+	    public virtual void RemoveIndex(string table, string name)
+	    {
+	        throw new NotImplementedException();
+	    }
 	}
 }

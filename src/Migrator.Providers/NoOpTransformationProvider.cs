@@ -337,7 +337,22 @@ namespace Migrator.Providers
 			return guid.ToString();
 		}
 
-		public void Dispose()
+	    public bool IndexExists(string indexName, string tableName)
+	    {
+	        throw new NotImplementedException();
+	    }
+
+	    public void AddIndex(string name, string table, params string[] columns)
+	    {
+	        throw new NotImplementedException();
+	    }
+
+	    public bool IndexExists(string indexName)
+	    {
+            throw new NotImplementedException();
+	    }
+
+	    public void Dispose()
 		{
 			//No Op
 		}

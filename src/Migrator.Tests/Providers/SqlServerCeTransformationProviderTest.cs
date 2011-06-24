@@ -13,6 +13,7 @@
 
 using System;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlServerCe;
 using System.IO;
 using Migrator.Providers.SqlServer;
@@ -20,48 +21,58 @@ using NUnit.Framework;
 
 namespace Migrator.Tests.Providers
 {
-	[TestFixture]
-	[Category("SqlServerCe")]
-	public class SqlServerCeTransformationProviderTest : TransformationProviderConstraintBase
-	{
-		#region Setup/Teardown
+    [TestFixture]
+    [Category("SqlServerCe")]
+    public class SqlServerCeTransformationProviderTest : TransformationProviderConstraintBase
+    {
+        #region Setup/Teardown
 
-		[SetUp]
-		public void SetUp()
-		{
-			string constr = ConfigurationManager.AppSettings["SqlServerCeConnectionString"];
-			if (constr == null)
-				throw new ArgumentNullException("SqlServerCeConnectionString", "No config file");
+        [SetUp]
+        public void SetUp()
+        {
+            string constr = ConfigurationManager.AppSettings["SqlServerCeConnectionString"];
+            if (constr == null)
+                throw new ArgumentNullException("SqlServerCeConnectionString", "No config file");
 
-			EnsureDatabase(constr);
+            EnsureDatabase(constr);
 
-			_provider = new SqlServerCeTransformationProvider(new SqlServerCeDialect(), constr);
-			_provider.BeginTransaction();
+            _provider = new SqlServerCeTransformationProvider(new SqlServerCeDialect(), constr);
+            _provider.BeginTransaction();
 
-			AddDefaultTable();
-		}
+            AddDefaultTable();
 
-		#endregion
+            _provider.Commit();
+        }
 
-		void EnsureDatabase(string constr)
-		{
-			var connection = new SqlCeConnection(constr);
-			if (!File.Exists(connection.Database))
-			{
-				var engine = new SqlCeEngine(constr);
-				engine.CreateDatabase();
-			}
-		}
+        #endregion
 
-		// [Test,Ignore("SqlServerCe doesn't support check constraints")]
-		public override void CanAddCheckConstraint()
-		{
-		}
+        void EnsureDatabase(string constr)
+        {
+            var connection = new SqlCeConnection(constr);
+            if (!File.Exists(connection.Database))
+            {
+                var engine = new SqlCeEngine(constr);
+                engine.CreateDatabase();
+            }
+        }
 
-		// [Test,Ignore("SqlServerCe doesn't support table renaming")]
-		// see: http://www.pocketpcdn.com/articles/articles.php?&atb.set(c_id)=74&atb.set(a_id)=8145&atb.perform(details)=&
-		public override void RenameTableThatExists()
-		{
-		}
-	}
+        [Test]
+        public void AddIndex()
+        {
+            _provider.AddColumn("TestTwo", "TestIndexed", DbType.Boolean);
+            _provider.AddIndex("IX_Test_index", "TestTwo", new[] { "TestIndexed" });
+            Assert.IsTrue(_provider.IndexExists("IX_Test_index", "TestTwo"));
+        }
+
+        // [Test,Ignore("SqlServerCe doesn't support check constraints")]
+        public override void CanAddCheckConstraint()
+        {
+        }
+
+        // [Test,Ignore("SqlServerCe doesn't support table renaming")]
+        // see: http://www.pocketpcdn.com/articles/articles.php?&atb.set(c_id)=74&atb.set(a_id)=8145&atb.perform(details)=&
+        public override void RenameTableThatExists()
+        {
+        }
+    }
 }

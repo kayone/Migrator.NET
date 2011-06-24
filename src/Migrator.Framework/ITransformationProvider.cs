@@ -503,5 +503,8 @@ namespace Migrator.Framework
 		/// <param name="guid"></param>
 		/// <returns></returns>
 		string Encode(Guid guid);
+
+	    bool IndexExists(string indexName, string tableName);
+	    void AddIndex(string name, string table, params string[] columns);
 	}
 }
