@@ -19,6 +19,11 @@ namespace Migrator.Framework
 		/// </summary>
 		List<long> AppliedMigrations { get; }
 
+        /// <summary>
+        /// Connection string to the database
+        /// </summary>
+        String ConnectionString { get; }
+
 		/// <summary>
 		/// Logger used to log details of operations performed during migration
 		/// </summary>

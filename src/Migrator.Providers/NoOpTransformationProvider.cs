@@ -23,7 +23,12 @@ namespace Migrator.Providers
 			get { return null; }
 		}
 
-		public virtual ILogger Logger
+        public string ConnectionString
+        {
+            get { return String.Empty; }
+	    }
+
+	    public virtual ILogger Logger
 		{
 			get { return null; }
 			set { }

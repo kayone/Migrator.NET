@@ -50,6 +50,8 @@ namespace Migrator.Providers
             get { return _dialect; }
         }
 
+        public string ConnectionString { get { return _connectionString; }}
+
         /// <summary>
         /// Returns the event logger
         /// </summary>
