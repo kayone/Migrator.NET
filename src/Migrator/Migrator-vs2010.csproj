@@ -72,10 +72,6 @@
       <HintPath>..\..\lib\Npgsql\net-2.0\Mono.Security.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-    <Reference Include="MySql.Data">
-      <HintPath>..\..\lib\MySql.Data.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
     <Reference Include="Npgsql">
       <HintPath>..\..\lib\Npgsql\net-2.0\Npgsql.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>

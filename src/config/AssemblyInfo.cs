@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Migrator")]
 [assembly: AssemblyDescription("Database migration for .NET")]
 [assembly: AssemblyProduct("Migrator")]
-[assembly: AssemblyCopyright("Copyright © 2006")]
+[assembly: AssemblyCopyright("Copyright © 2012")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
@@ -28,4 +28,4 @@ using System.Runtime.InteropServices;
 //      Revision
 //
 
-[assembly: AssemblyVersion("0.9.5.*")]
+[assembly: AssemblyVersion("0.9.6.*")]
