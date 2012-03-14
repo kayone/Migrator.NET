@@ -9,39 +9,57 @@ namespace Migrator.Framework
 	public enum ColumnProperty
 	{
 		None = 0,
-		/// <summary>
+		
+        
+        /// <summary>
 		/// Null is allowable
 		/// </summary>
 		Null = 1,
-		/// <summary>
+		
+        
+        /// <summary>
 		/// Null is not allowable
 		/// </summary>
 		NotNull = 2,
-		/// <summary>
-		/// Identity column, autoinc
+		
+        
+        /// <summary>
+		/// Identity column, auto increment
 		/// </summary>
 		Identity = 4,
-		/// <summary>
+		
+        
+        /// <summary>
 		/// Unique Column
 		/// </summary>
 		Unique = 8,
-		/// <summary>
+		
+        
+        /// <summary>
 		/// Indexed Column
 		/// </summary>
 		Indexed = 16,
-		/// <summary>
+		
+        
+        /// <summary>
 		/// Unsigned Column
 		/// </summary>
 		Unsigned = 32,
-		/// <summary>
+		
+        
+        /// <summary>
 		/// Foreign Key
 		/// </summary>
 		ForeignKey = Unsigned | Null,
-		/// <summary>
+		
+        
+        /// <summary>
 		/// Primary Key
 		/// </summary>
 		PrimaryKey = 64 | Unsigned | NotNull,
-		/// <summary>
+		
+        
+        /// <summary>
 		/// Primary key. Make the column a PrimaryKey and unsigned
 		/// </summary>
 		PrimaryKeyWithIdentity = PrimaryKey | Identity

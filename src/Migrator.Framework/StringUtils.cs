@@ -6,7 +6,7 @@ namespace Migrator.Framework
 	public class StringUtils
 	{
 		/// <summary>
-		/// Convert a classname to something more readable.
+		/// Convert a class name to something more readable.
 		/// ex.: CreateATable => Create a table
 		/// </summary>
 		/// <param name="className"></param>
