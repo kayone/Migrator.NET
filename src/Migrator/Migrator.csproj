@@ -82,31 +82,25 @@
       <Link>AssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="BaseMigrate.cs" />
-    <Compile Include="Compile\ScriptEngine.cs" />
     <Compile Include="DuplicatedVersionException.cs" />
-    <Compile Include="IrreversibleMigrationException.cs" />
     <Compile Include="MigrateAnywhere.cs" />
     <Compile Include="MigrationComparer.cs" />
     <Compile Include="MigrationLoader.cs" />
     <Compile Include="Migrator.cs" />
     <Compile Include="ProviderFactory.cs" />
-    <Compile Include="Tools\SchemaDumper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\default.build">
-      <Link>default.build</Link>
-    </None>
     <None Include="MigratorDotNet.snk" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Migrator.Framework\Migrator.Framework-vs2008.csproj">
+    <ProjectReference Include="..\Migrator.Framework\Migrator.Framework.csproj">
       <Project>{5270F048-E580-486C-B14C-E5B9F6E539D4}</Project>
       <Name>Migrator.Framework-vs2008</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Migrator.Providers\Migrator.Providers-vs2008.csproj">
+    <ProjectReference Include="..\Migrator.Providers\Migrator.Providers.csproj">
       <Project>{D58C68E4-D789-40F7-9078-C9F587D4363C}</Project>
       <Name>Migrator.Providers-vs2008</Name>
     </ProjectReference>
