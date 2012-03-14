@@ -3,20 +3,19 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{D58C68E4-D789-40F7-9078-C9F587D4363C}</ProjectGuid>
+    <ProjectGuid>{882B6A93-67B8-45BF-8636-5796B1B1CBF8}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Migrator.Providers</RootNamespace>
-    <AssemblyName>Migrator.Providers</AssemblyName>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Migrator.Tests</RootNamespace>
+    <AssemblyName>Migrator.Tests</AssemblyName>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>MigratorDotNet.snk</AssemblyOriginatorKeyFile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -38,7 +37,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>bin\Migrator.Tests\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;DOTNET2</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -47,41 +46,30 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <OutputPath>bin\Migrator.Tests\Release\</OutputPath>
+    <DefineConstants>TRACE;DOTNET2</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <DocumentationFile>bin\Release\Migrator.Providers.XML</DocumentationFile>
-    <NoWarn>1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Mono.Security, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+    <Reference Include="nunit.framework, Version=2.5.10.11092, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\lib\Npgsql\net-2.0\Mono.Security.dll</HintPath>
+      <HintPath>..\..\packages\NUnit.2.5.10.11092\lib\nunit.framework.dll</HintPath>
     </Reference>
-    <Reference Include="mysql.data, Version=6.4.4.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+    <Reference Include="nunit.mocks, Version=2.5.10.11092, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\MySql.Data.6.4.4\lib\net40\mysql.data.dll</HintPath>
+      <HintPath>..\..\packages\NUnit.2.5.10.11092\lib\nunit.mocks.dll</HintPath>
     </Reference>
-    <Reference Include="NAnt.Core, Version=0.85.2344.0, Culture=neutral">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\lib\NAnt.Core.dll</HintPath>
+    <Reference Include="pnunit.framework">
+      <HintPath>..\..\packages\NUnit.2.5.10.11092\lib\pnunit.framework.dll</HintPath>
     </Reference>
-    <Reference Include="Npgsql, Version=1.0.0.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\lib\Npgsql\net-2.0\Npgsql.dll</HintPath>
-    </Reference>
-    <Reference Include="Oracle.DataAccess, Version=2.111.5.10, Culture=neutral, PublicKeyToken=89b483f429c47342, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\lib\Oracle.DataAccess.dll</HintPath>
+    <Reference Include="Rhino.Mocks">
+      <HintPath>..\..\lib\Rhino.Mocks.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Data.SQLite, Version=1.0.48.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\lib\System.Data.SQLite.DLL</HintPath>
-    </Reference>
     <Reference Include="System.Data.SqlServerCe, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <Private>True</Private>
       <HintPath>..\..\packages\SqlServerCompact.4.0.8482.1\lib\System.Data.SqlServerCe.dll</HintPath>
@@ -89,39 +77,51 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ColumnPropertiesMapper.cs" />
-    <Compile Include="Dialect.cs" />
-    <Compile Include="ForeignKeyConstraintMapper.cs" />
-    <Compile Include="Impl\Mysql\MysqlDialect.cs" />
-    <Compile Include="Impl\Mysql\MySqlTransformationProvider.cs" />
-    <Compile Include="Impl\PostgreSQL\PostgreSQL82Dialect.cs" />
-    <Compile Include="Impl\SqlServer\SqlServer2005Dialect.cs" />
-    <Compile Include="Impl\SqlServer\SqlServerCeDialect.cs" />
-    <Compile Include="Impl\SqlServer\SqlServerCeTransformationProvider.cs" />
-    <Compile Include="NoOpTransformationProvider.cs" />
-    <Compile Include="Impl\Oracle\OracleDialect.cs" />
-    <Compile Include="Impl\Oracle\OracleTransformationProvider.cs" />
-    <Compile Include="Impl\PostgreSQL\PostgreSQLDialect.cs" />
-    <Compile Include="Impl\PostgreSQL\PostgreSQLTransformationProvider.cs" />
-    <Compile Include="Impl\SQLite\SQLiteDialect.cs" />
-    <Compile Include="Impl\SQLite\SQLiteTransformationProvider.cs" />
-    <Compile Include="Impl\SqlServer\SqlServerDialect.cs" />
-    <Compile Include="Impl\SqlServer\SqlServerTransformationProvider.cs" />
-    <Compile Include="TransformationProvider.cs" />
-    <Compile Include="TypeNames.cs" />
-    <Compile Include="Utility\MySqlServerUtility.cs" />
-    <Compile Include="Utility\OracleServerUtility.cs" />
-    <Compile Include="Utility\PostgreSqlServerUtility.cs" />
-    <Compile Include="Utility\SqlServerUtility.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Migrator.Framework\Migrator.Framework-vs2008.csproj">
-      <Project>{5270F048-E580-486C-B14C-E5B9F6E539D4}</Project>
-      <Name>Migrator.Framework-vs2008</Name>
-    </ProjectReference>
+    <Compile Include="ColumnPropertyMapperTest.cs" />
+    <Compile Include="Data\TestMigrations.cs" />
+    <Compile Include="JoiningTableTransformationProviderExtensionsTests.cs" />
+    <Compile Include="MigrationLoaderTest.cs" />
+    <Compile Include="MigrationTestCase.cs" />
+    <Compile Include="MigrationTypeComparerTest.cs" />
+    <Compile Include="MigratorTest.cs" />
+    <Compile Include="MigratorTestDates.cs" />
+    <Compile Include="ProviderFactoryTest.cs" />
+    <Compile Include="Providers\GenericProviderTests.cs" />
+    <Compile Include="Providers\SqlServer2005TransformationProviderTest.cs" />
+    <Compile Include="Providers\MySqlTransformationProviderTest.cs" />
+    <Compile Include="Providers\OracleTransformationProviderTest.cs" />
+    <Compile Include="Providers\PostgreSQLTransformationProviderTest.cs" />
+    <Compile Include="Providers\SQLiteTransformationProviderTest.cs" />
+    <Compile Include="Providers\SqlServerCeTransformationProviderTest.cs" />
+    <Compile Include="Providers\SqlServerTransformationProviderTest.cs" />
+    <Compile Include="Providers\TransformationProviderBase.cs" />
+    <Compile Include="Providers\TransformationProviderConstraintBase.cs" />
+    <Compile Include="ScriptEngineTests.cs" />
+    <Compile Include="Tools\SchemaDumperTest.cs" />
+    <Compile Include="Tools\SqlFileLoggerTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Migrator\Migrator.csproj">
+      <Project>{1FEE70A4-AAD7-4C60-BE60-3F7DC03A8C4D}</Project>
+      <Name>Migrator</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Migrator.Framework\Migrator.Framework.csproj">
+      <Project>{5270F048-E580-486C-B14C-E5B9F6E539D4}</Project>
+      <Name>Migrator.Framework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Migrator.Providers\Migrator.Providers.csproj">
+      <Project>{D58C68E4-D789-40F7-9078-C9F587D4363C}</Project>
+      <Name>Migrator.Providers</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\config\app.config">
+      <Link>app.config</Link>
+    </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -150,10 +150,6 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="MigratorDotNet.snk" />
-    <None Include="packages.config" />
-  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
@@ -162,11 +158,4 @@ xcopy /s /y "$(SolutionDir)packages\SqlServerCompact.4.0.8482.1\NativeBinaries\x
 if not exist "$(TargetDir)amd64" md "$(TargetDir)amd64"
 xcopy /s /y "$(SolutionDir)packages\SqlServerCompact.4.0.8482.1\NativeBinaries\amd64\*.*" "$(TargetDir)amd64"</PostBuildEvent>
   </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

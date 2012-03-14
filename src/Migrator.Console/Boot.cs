@@ -23,7 +23,7 @@ namespace Migrator.MigratorConsole
 		[STAThread]
 		public static int Main(string[] argv)
 		{
-			var con = new MigratorConsole(argv);
+			var con = new Console.MigratorConsole(argv);
 			return con.Run();
 		}
 	}
