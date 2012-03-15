@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SQLite;
 using Migrator.Framework;
 using ForeignKeyConstraint = Migrator.Framework.ForeignKeyConstraint;
-using SqliteConnection = System.Data.SQLite.SQLiteConnection;
 
 #else
 using System;

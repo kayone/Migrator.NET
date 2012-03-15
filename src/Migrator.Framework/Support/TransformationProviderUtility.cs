@@ -1,11 +1,8 @@
-﻿using log4net;
-
-namespace Migrator.Framework.Support
+﻿namespace Migrator.Framework.Support
 {
 	public static class TransformationProviderUtility
 	{
 		public const int MaxLengthForForeignKeyInOracle = 30;
-		static readonly ILog log = LogManager.GetLogger(typeof (TransformationProviderUtility));
 		static readonly string[] CommonWords = new[] {"Test"};
 
 		public static string CreateForeignKeyName(string tableName, string foreignKeyTableName)
@@ -31,7 +28,7 @@ namespace Migrator.Framework.Support
 
 			if (name != adjustedName)
 			{
-				log.WarnFormat("Name has been truncated from: {0} to: {1}", name, adjustedName);
+				//log.WarnFormat("Name has been truncated from: {0} to: {1}", name, adjustedName);
 			}
 
 			return adjustedName;
