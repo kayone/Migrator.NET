@@ -17,7 +17,6 @@ using System.Reflection;
 using Migrator.Framework;
 using Migrator.Framework.Loggers;
 using NUnit.Framework;
-using NUnit.Mocks;
 
 namespace Migrator.Tests
 {
@@ -62,31 +61,31 @@ namespace Migrator.Tests
 
 		void SetUpCurrentVersion(long version, List<long> appliedVersions, bool assertRollbackIsCalled, bool includeBad)
 		{
-			var providerMock = new DynamicMock(typeof (ITransformationProvider));
+            //var providerMock = new DynamicMock(typeof (ITransformationProvider));
 
-			providerMock.SetReturnValue("get_MaxVersion", version);
-			providerMock.SetReturnValue("get_AppliedMigrations", appliedVersions);
-			providerMock.SetReturnValue("get_Logger", new Logger(false));
-			if (assertRollbackIsCalled)
-				providerMock.Expect("Rollback");
-			else
-				providerMock.ExpectNoCall("Rollback");
+            //providerMock.SetReturnValue("get_MaxVersion", version);
+            //providerMock.SetReturnValue("get_AppliedMigrations", appliedVersions);
+            //providerMock.SetReturnValue("get_Logger", new Logger(false));
+            //if (assertRollbackIsCalled)
+            //    providerMock.Expect("Rollback");
+            //else
+            //    providerMock.ExpectNoCall("Rollback");
 
-			_migrator = new Migrator((ITransformationProvider) providerMock.MockInstance, Assembly.GetExecutingAssembly(), false);
+            //_migrator = new Migrator((ITransformationProvider) providerMock.MockInstance, Assembly.GetExecutingAssembly(), false);
 
-			// Enlève toutes les migrations trouvée automatiquement
-			_migrator.MigrationsTypes.Clear();
-			_upCalled.Clear();
-			_downCalled.Clear();
+            //// Enlève toutes les migrations trouvée automatiquement
+            //_migrator.MigrationsTypes.Clear();
+            //_upCalled.Clear();
+            //_downCalled.Clear();
 
-			_migrator.MigrationsTypes.Add(typeof (FirstMigration));
-			_migrator.MigrationsTypes.Add(typeof (SecondMigration));
-			_migrator.MigrationsTypes.Add(typeof (ThirdMigration));
-			_migrator.MigrationsTypes.Add(typeof (FourthMigration));
-			_migrator.MigrationsTypes.Add(typeof (SixthMigration));
+            //_migrator.MigrationsTypes.Add(typeof (FirstMigration));
+            //_migrator.MigrationsTypes.Add(typeof (SecondMigration));
+            //_migrator.MigrationsTypes.Add(typeof (ThirdMigration));
+            //_migrator.MigrationsTypes.Add(typeof (FourthMigration));
+            //_migrator.MigrationsTypes.Add(typeof (SixthMigration));
 
-			if (includeBad)
-				_migrator.MigrationsTypes.Add(typeof (BadMigration));
+            //if (includeBad)
+            //    _migrator.MigrationsTypes.Add(typeof (BadMigration));
 		}
 
 		public class AbstractTestMigration : Migration
