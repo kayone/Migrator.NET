@@ -1,24 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8FF5F3DF-DF83-470C-ADFE-C0FF2B858F0F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kayone.Migrator", "Migrator\Kayone.Migrator.csproj", "{1FEE70A4-AAD7-4C60-BE60-3F7DC03A8C4D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extras", "Extras", "{02B014BC-CC35-466F-A2F4-C5B5AC830653}"
-	ProjectSection(SolutionItems) = preProject
-		doc\CHANGES.txt = doc\CHANGES.txt
-		local.properties-example = local.properties-example
-		src\MigratorDotNet.snk = src\MigratorDotNet.snk
-		doc\README.txt = doc\README.txt
-		doc\TODO.txt = doc\TODO.txt
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kayone.Migrator.Framework", "Migrator.Framework\Kayone.Migrator.Framework.csproj", "{5270F048-E580-486C-B14C-E5B9F6E539D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migrator", "src\Migrator\Migrator.csproj", "{1FEE70A4-AAD7-4C60-BE60-3F7DC03A8C4D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kayone.Migrator.Providers", "Migrator.Providers\Kayone.Migrator.Providers.csproj", "{D58C68E4-D789-40F7-9078-C9F587D4363C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migrator.Framework", "src\Migrator.Framework\Migrator.Framework.csproj", "{5270F048-E580-486C-B14C-E5B9F6E539D4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migrator.Providers", "src\Migrator.Providers\Migrator.Providers.csproj", "{D58C68E4-D789-40F7-9078-C9F587D4363C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migrator.Tests", "src\Migrator.Tests\Migrator.Tests.csproj", "{882B6A93-67B8-45BF-8636-5796B1B1CBF8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migrator.Tests", "Migrator.Tests\Migrator.Tests.csproj", "{882B6A93-67B8-45BF-8636-5796B1B1CBF8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,8 +34,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{882B6A93-67B8-45BF-8636-5796B1B1CBF8} = {8FF5F3DF-DF83-470C-ADFE-C0FF2B858F0F}
 	EndGlobalSection
 EndGlobal
