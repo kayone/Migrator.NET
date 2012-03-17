@@ -12,7 +12,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
     /// </summary>
     public abstract class TransformationProviderWithConstraintTestBase<TProvider> : TransformationProviderTestBase<TProvider> where TProvider : TransformationProviderBase
     {
-        public void AddForeignKey()
+        private void AddForeignKey()
         {
             GivenTableWithPrimaryKey();
             _provider.AddForeignKey(new ForeignKey("TestTwo", "TestId", "Test", "Id"));
@@ -23,17 +23,17 @@ namespace Migrator.Tests.ProvidersWithConstraints
             _provider.AddPrimaryKey(TestTableName, IdColumnName);
         }
 
-        public void AddUniqueConstraint()
+        private void AddUniqueConstraint()
         {
             _provider.AddUniqueConstraint("UN_Test_TestTwo", "TestTwo", "TestId");
         }
 
-        public void AddMultipleUniqueConstraint()
+        private void AddMultipleUniqueConstraint()
         {
             _provider.AddUniqueConstraint("UN_Test_TestTwo", "TestTwo", "Id", "TestId");
         }
 
-        public void AddCheckConstraint()
+        private void AddCheckConstraint()
         {
             _provider.AddCheckConstraint("CK_TestTwo_TestId", "TestTwo", "TestId>5");
         }

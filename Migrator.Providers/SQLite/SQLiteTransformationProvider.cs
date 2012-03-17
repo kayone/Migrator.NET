@@ -27,6 +27,7 @@ namespace Migrator.Providers.SQLite
             // NOOP Because SQLite doesn't support foreign keys
         }
 
+
         public override void RemoveForeignKey(string name, string table)
         {
             // NOOP Because SQLite doesn't support foreign keys
@@ -81,10 +82,7 @@ namespace Migrator.Providers.SQLite
             throw new NotSupportedException();
         }
 
-        public override bool ConstraintExists(string table, string name)
-        {
-            return false;
-        }
+   
 
         public override IEnumerable<string> GetTables()
         {

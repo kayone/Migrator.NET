@@ -39,15 +39,6 @@ namespace Migrator.Providers.SqlServer
             Connection.Open();
         }
 
-        // FIXME: We should look into implementing this with INFORMATION_SCHEMA if possible
-        // so that it would be usable by all the SQL Server implementations
-        public override bool ConstraintExists(string table, string name)
-        {
-            using (IDataReader reader = ExecuteQuery("SELECT TOP 1 * FROM sysobjects WHERE id = object_id('{0}')", name))
-            {
-                return reader.Read();
-            }
-        }
 
         protected override void AddColumn(string table, string sqlColumn)
         {

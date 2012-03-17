@@ -37,15 +37,6 @@ namespace Migrator.Providers.SqlServerCe
             Connection.Open();
         }
 
-        public override bool ConstraintExists(string table, string name)
-        {
-            using (IDataReader reader =
-                ExecuteQuery(string.Format("SELECT cont.constraint_name FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS cont WHERE cont.Constraint_Name='{0}'", name)))
-            {
-                return reader.Read();
-            }
-        }
-
         public override Dialect Dialect
         {
             get { return new SqlServerCeDialect(); }

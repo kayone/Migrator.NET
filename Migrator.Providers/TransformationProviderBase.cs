@@ -282,7 +282,7 @@ namespace Migrator.Providers
 
             table = QuoteTableNameIfRequired(table);
 
-            ExecuteNonQuery(String.Format("ALTER TABLE {0} ADD CONSTRAINT {1} UNIQUE({2}) ", table, name, string.Join(", ", columns)));
+            ExecuteNonQuery("ALTER TABLE {0} ADD CONSTRAINT {1} UNIQUE({2}) ", table, name, string.Join(", ", columns));
         }
 
         public virtual void AddCheckConstraint(string name, string table, string checkSql)
@@ -317,13 +317,21 @@ namespace Migrator.Providers
                     foreignKey.PrimaryTable, String.Join(",", foreignKey.PrimaryColumns), constraintResolved, constraintResolved));
         }
 
-        /// <summary>
-        /// Determines if a constraint exists.
-        /// </summary>
-        /// <param name="name">Constraint name</param>
-        /// <param name="table">Table owning the constraint</param>
-        /// <returns><c>true</c> if the constraint exists.</returns>
-        public abstract bool ConstraintExists(string table, string name);
+
+        public virtual List<string> GetConstraints(string tableName)
+        {
+            if (!TableExists(tableName))
+                throw new TableDoesntExistsException(tableName);
+
+            return ExecuteStringQuery("SELECT CONSTRAINT_NAME FROM information_schema.table_constraints where table_name = {0}", tableName);
+        }
+
+        public bool ConstraintExists(string tableName, string constraintName)
+        {
+            return GetConstraints(tableName).Any(
+                 c => string.Equals(c, constraintName, StringComparison.InvariantCultureIgnoreCase));
+        }
+
 
         public virtual bool PrimaryKeyExists(string table, string name)
         {

@@ -42,27 +42,6 @@ namespace Migrator.Providers.Mysql
             }
         }
 
-        public override bool ConstraintExists(string table, string name)
-        {
-            if (!TableExists(table))
-                return false;
-
-            string sqlConstraint = string.Format("SHOW KEYS FROM {0}", table);
-
-            using (IDataReader reader = ExecuteQuery(sqlConstraint))
-            {
-                while (reader.Read())
-                {
-                    if (reader["Key_name"].ToString().ToLower() == name.ToLower())
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
         public override bool PrimaryKeyExists(string table, string name)
         {
             return ConstraintExists(table, "PRIMARY");
