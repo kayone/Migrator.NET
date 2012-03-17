@@ -42,7 +42,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
         [Test]
         public void AddTableWithMyISAMEngine()
         {
-            _provider.AddTable("Test", "MyISAM",
+            _provider.AddTable("Test", 
                                new Column("Id", DbType.Int32, ColumnProperty.NotNull),
                                new Column("name", DbType.String, 50)
                 );

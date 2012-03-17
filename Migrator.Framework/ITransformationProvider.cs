@@ -12,18 +12,12 @@ namespace Migrator.Framework
     public interface ITransformationProvider : IDisposable
     {
         IDbConnection Connection { get; set; }
-
         Dialect Dialect { get; }
 
         /// <summary>
         /// The list of Migrations currently applied to the database.
         /// </summary>
         List<long> AppliedMigrations { get; }
-
-        /// <summary>
-        /// Connection string to the database
-        /// </summary>
-        String ConnectionString { get; }
 
         /// <summary>
         /// Logger used to log details of operations performed during migration
@@ -33,65 +27,9 @@ namespace Migrator.Framework
         /// <summary>
         /// Add a column to an existing table
         /// </summary>
-        /// <param name="table">The name of the table that will get the new column</param>
-        /// <param name="column">The name of the new column</param>
-        /// <param name="type">The data type for the new columnd</param>
-        /// <param name="size">The precision or size of the column</param>
-        /// <param name="property">Properties that can be ORed together</param>
-        /// <param name="defaultValue">The default value of the column if no value is given in a query</param>
-        void AddColumn(string table, string column, DbType type, int size, ColumnProperty property, object defaultValue);
-
-        /// <summary>
-        /// Add a column to an existing table
-        /// </summary>
-        /// <param name="table">The name of the table that will get the new column</param>
-        /// <param name="column">The name of the new column</param>
-        /// <param name="type">The data type for the new columnd</param>
-        void AddColumn(string table, string column, DbType type);
-
-        /// <summary>
-        /// Add a column to an existing table
-        /// </summary>
-        /// <param name="table">The name of the table that will get the new column</param>
-        /// <param name="column">The name of the new column</param>
-        /// <param name="type">The data type for the new columnd</param>
-        /// <param name="size">The precision or size of the column</param>
-        void AddColumn(string table, string column, DbType type, int size);
-
-        /// <summary>
-        /// Add a column to an existing table
-        /// </summary>
-        /// <param name="table">The name of the table that will get the new column</param>
-        /// <param name="column">The name of the new column</param>
-        /// <param name="type">The data type for the new columnd</param>
-        /// <param name="size">The precision or size of the column</param>
-        /// <param name="property">Properties that can be ORed together</param>
-        void AddColumn(string table, string column, DbType type, int size, ColumnProperty property);
-
-        /// <summary>
-        /// Add a column to an existing table
-        /// </summary>
-        /// <param name="table">The name of the table that will get the new column</param>
-        /// <param name="column">The name of the new column</param>
-        /// <param name="type">The data type for the new columnd</param>
-        /// <param name="property">Properties that can be ORed together</param>
-        void AddColumn(string table, string column, DbType type, ColumnProperty property);
-
-        /// <summary>
-        /// Add a column to an existing table with the default column size.
-        /// </summary>
-        /// <param name="table">The name of the table that will get the new column</param>
-        /// <param name="column">The name of the new column</param>
-        /// <param name="type">The data type for the new columnd</param>
-        /// <param name="defaultValue">The default value of the column if no value is given in a query</param>
-        void AddColumn(string table, string column, DbType type, object defaultValue);
-
-        /// <summary>
-        /// Add a column to an existing table
-        /// </summary>
-        /// <param name="table">The name of the table that will get the new column</param>
-        /// <param name="column">An instance of a <see cref="Column">Column</see> with the specified properties</param>
-        void AddColumn(string table, Column column);
+        /// <param name="tableName">The name of the table that will get the new column</param>
+        /// <param name="column">The column to be added</param>
+        void AddColumn(string tableName, Column column);
 
         /// <summary>
         /// Add a foreign key constraint
@@ -225,21 +163,13 @@ namespace Migrator.Framework
         /// <param name="checkSql">The check constraint definition.</param>
         void AddCheckConstraint(string name, string table, string checkSql);
 
+
         /// <summary>
         /// Add a table
         /// </summary>
         /// <param name="name">The name of the table to add.</param>
         /// <param name="columns">The columns that are part of the table.</param>
         void AddTable(string name, params Column[] columns);
-
-
-        /// <summary>
-        /// Add a table
-        /// </summary>
-        /// <param name="name">The name of the table to add.</param>
-        /// <param name="engine">The name of the database engine to use. (MySQL)</param>
-        /// <param name="columns">The columns that are part of the table.</param>
-        void AddTable(string name, string engine, params Column[] columns);
 
 
 
@@ -321,13 +251,13 @@ namespace Migrator.Framework
         /// <param name="table">The table name that you want the columns for.</param>
         /// <param name="column">The column name for which you want information.</param>
         /// <returns></returns>
-        Column GetColumnByName(string table, string column);
+        Column GetColumn(string table, string column);
 
         /// <summary>
         /// Get the names of all of the tables
         /// </summary>
         /// <returns>The names of all the tables.</returns>
-        string[] GetTables();
+        IEnumerable<string> GetTables();
 
         /// <summary>
         /// Insert data into a table
@@ -393,7 +323,7 @@ namespace Migrator.Framework
         /// Remove an existing table
         /// </summary>
         /// <param name="tableName">The name of the table</param>
-        void DeleteTable(string tableName);
+        void DropTable(string tableName);
 
         /// <summary>
         /// Rename an existing table
@@ -424,13 +354,6 @@ namespace Migrator.Framework
         /// <returns></returns>
         IDataReader Select(string what, string from, string where);
 
-        /// <summary>
-        /// Get values from a table
-        /// </summary>
-        /// <param name="what">The columns to select</param>
-        /// <param name="from">The table to select from</param>
-        /// <returns></returns>
-        IDataReader Select(string what, string from);
 
         /// <summary>
         /// Get a single value from a table
@@ -441,13 +364,6 @@ namespace Migrator.Framework
         /// <returns></returns>
         object SelectScalar(string what, string from, string where);
 
-        /// <summary>
-        /// Get a single value from a table
-        /// </summary>
-        /// <param name="what">The columns to select</param>
-        /// <param name="from">The table to select from</param>
-        /// <returns></returns>
-        object SelectScalar(string what, string from);
 
         /// <summary>
         /// Check if a table already exists
@@ -455,15 +371,6 @@ namespace Migrator.Framework
         /// <param name="tableName">The name of the table that you want to check on.</param>
         /// <returns></returns>
         bool TableExists(string tableName);
-
-        /// <summary>
-        /// Update the values in a table
-        /// </summary>
-        /// <param name="table">The name of the table to update</param>
-        /// <param name="columns">The names of the columns.</param>
-        /// <param name="columnValues">The values for the columns in the same order as the names.</param>
-        /// <returns></returns>
-        int Update(string table, string[] columns, string[] columnValues);
 
         /// <summary>
         /// Update the values in a table
@@ -480,40 +387,6 @@ namespace Migrator.Framework
         /// </summary>
         /// <returns></returns>
         IDbCommand GetCommand();
-
-        /// <summary>
-        /// Execute a schema builder
-        /// </summary>
-        /// <param name="schemaBuilder"></param>
-        void ExecuteSchemaBuilder(SchemaBuilder.SchemaBuilder schemaBuilder);
-
-        /// <summary>
-        /// Quote a multiple column names, if required
-        /// </summary>
-        /// <param name="columnNames"></param>
-        /// <returns></returns>
-        string[] QuoteColumnNamesIfRequired(params string[] columnNames);
-
-        /// <summary>
-        /// Quaote column if required
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        string QuoteColumnNameIfRequired(string name);
-
-        /// <summary>
-        /// Quote table name if required
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        string QuoteTableNameIfRequired(string name);
-
-        /// <summary>
-        /// Encodes a GUID value as a string, suitable for inclusion in sql statement
-        /// </summary>
-        /// <param name="guid"></param>
-        /// <returns></returns>
-        string Encode(Guid guid);
 
         /// <summary>
         /// Change the target database

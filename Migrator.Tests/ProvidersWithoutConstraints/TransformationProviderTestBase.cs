@@ -7,11 +7,12 @@ using FluentAssertions;
 using Kayone.TestFoundation;
 using Migrator.Framework;
 using Migrator.Framework.Exceptions;
+using Migrator.Providers;
 using NUnit.Framework;
 
 namespace Migrator.Tests.ProvidersWithoutConstraints
 {
-    public abstract class TransformationProviderTestBase<TProvider> : LoggingTest where TProvider : ITransformationProvider
+    public abstract class TransformationProviderTestBase<TProvider> : LoggingTest where TProvider : TransformationProviderBase
     {
         private const string TEST_DB_NAME = "MigUnitTest";
 
@@ -182,7 +183,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         {
             _provider.TableExists(TestTableName).Should().BeTrue();
 
-            _provider.DeleteTable(TestTableName);
+            _provider.DropTable(TestTableName);
             _provider.TableExists(TestTableName).Should().BeFalse();
         }
 
@@ -221,14 +222,14 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void RemoveUnexistingTable()
         {
-            _provider.DeleteTable(TestTableName);
+            _provider.DropTable(TestTableName);
             _provider.TableExists(TestTableName).Should().BeFalse();
         }
 
         [Test]
         public void AddColumn()
         {
-            _provider.AddColumn(TestTableName, "TestCol", DbType.String, 50);
+            _provider.AddColumn(TestTableName, new Column("TestCol", DbType.String, 50));
             _provider.ColumnExists(TestTableName, "TestCol").Should().BeTrue();
         }
 
@@ -243,38 +244,38 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void AddDecimalColumn()
         {
-            _provider.AddColumn(TestTableName, "TestDecimal", DbType.Decimal, 38);
+            _provider.AddColumn(TestTableName, new Column( "TestDecimal", DbType.Decimal, 38));
             _provider.ColumnExists(TestTableName, "TestDecimal").Should().BeTrue();
         }
 
         [Test]
         public void AddColumnWithDefault()
         {
-            _provider.AddColumn(TestTableName, "TestWithDefault", DbType.Int32, 50, 0, 10);
+            _provider.AddColumn(TestTableName,new Column( "TestWithDefault", DbType.Int32, 50, 0, 10));
             _provider.ColumnExists(TestTableName, "TestWithDefault").Should().BeTrue();
         }
 
         [Test]
         public void AddColumnWithDefaultButNoSize()
         {
-            _provider.AddColumn(TestTableName, "TestWithDefault", DbType.Int32, 10);
+            _provider.AddColumn(TestTableName, new Column("TestWithDefault", DbType.Int32, 10));
             _provider.ColumnExists(TestTableName, "TestWithDefault").Should().BeTrue();
 
-            _provider.AddColumn(TestTableName, "TestWithDefaultString", DbType.String, "'foo'");
+            _provider.AddColumn(TestTableName, new Column( "TestWithDefaultString", DbType.String, "'foo'"));
             _provider.ColumnExists(TestTableName, "TestWithDefaultString").Should().BeTrue();
         }
 
         [Test]
         public void AddBooleanColumnWithDefault()
         {
-            _provider.AddColumn(TestTableName, "TestBoolean", DbType.Boolean, 0, 0, false);
+            _provider.AddColumn(TestTableName, new Column("TestBoolean", DbType.Boolean, 0, 0, false));
             _provider.ColumnExists(TestTableName, "TestBoolean").Should().BeTrue();
         }
 
         [Test]
         public void CanGetNullableFromProvider()
         {
-            _provider.AddColumn(TestTableName, "NullableColumn", DbType.String, 30, ColumnProperty.Null);
+            _provider.AddColumn(TestTableName, new Column("NullableColumn", DbType.String, 30, ColumnProperty.Null));
             Column[] columns = _provider.GetColumns(TestTableName);
             foreach (Column column in columns)
             {
@@ -310,7 +311,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void RemoveBoolColumn()
         {
-            _provider.AddColumn(TestTableName, "Inactif", DbType.Boolean);
+            _provider.AddColumn(TestTableName, new Column("Inactif", DbType.Boolean));
             _provider.ColumnExists(TestTableName, "Inactif").Should().BeTrue();
 
             _provider.RemoveColumn(TestTableName, "Inactif");
@@ -343,7 +344,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
             _provider.MigrationApplied(1);
             Assert.AreEqual(1, _provider.AppliedMigrations[0]);
 
-            _provider.DeleteTable("SchemaInfo");
+            _provider.DropTable("SchemaInfo");
             // Check that a "set" call works on the first run.
             _provider.MigrationApplied(1);
             Assert.AreEqual(1, _provider.AppliedMigrations[0]);

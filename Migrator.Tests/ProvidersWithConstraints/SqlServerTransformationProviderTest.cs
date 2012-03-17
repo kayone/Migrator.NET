@@ -37,7 +37,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
         [Test]
         public void ByteColumnWillBeCreatedAsBlob()
         {
-            _provider.AddColumn(TestTableName, "BlobColumn", DbType.Byte);
+            _provider.AddColumn(TestTableName,new Column("BlobColumn", DbType.Byte));
             _provider.ColumnExists(TestTableName, "BlobColumn").Should().BeTrue();
         }
 

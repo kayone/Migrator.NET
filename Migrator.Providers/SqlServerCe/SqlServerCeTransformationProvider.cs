@@ -87,7 +87,7 @@ namespace Migrator.Providers.SqlServerCe
 
         protected override void DoRenameColumn(string tableName, string oldColumnName, string newColumnName)
         {
-            Column column = GetColumnByName(tableName, oldColumnName);
+            Column column = GetColumn(tableName, oldColumnName);
 
             AddColumn(tableName, new Column(newColumnName, column.Type, column.ColumnProperty, column.DefaultValue));
             ExecuteNonQuery(string.Format("UPDATE {0} SET {1}={2}", tableName, newColumnName, oldColumnName));

@@ -91,7 +91,7 @@ namespace Migrator.Providers.Mysql
             return columns.ToArray();
         }
 
-        public override string[] GetTables()
+        public override IEnumerable<string> GetTables()
         {
             var tables = new List<string>();
             using (IDataReader reader = ExecuteQuery("SHOW TABLES"))
@@ -110,16 +110,6 @@ namespace Migrator.Providers.Mysql
             ExecuteNonQuery(String.Format("ALTER TABLE {0} MODIFY {1}", table, sqlColumn));
         }
 
-        public override void AddTable(string name, params Column[] columns)
-        {
-            AddTable(name, "INNODB", columns);
-        }
-
-        protected override void AddTable(string name, string engine, string columns)
-        {
-            string sqlCreate = string.Format("CREATE TABLE {0} ({1}) ENGINE = {2}", name, columns, engine);
-            ExecuteNonQuery(sqlCreate);
-        }
 
         protected override void DoRenameColumn(string tableName, string oldColumnName, string newColumnName)
         {

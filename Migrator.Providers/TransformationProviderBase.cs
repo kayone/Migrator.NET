@@ -18,7 +18,6 @@ using System.Linq;
 using System.Text;
 using Migrator.Framework;
 using Migrator.Framework.Exceptions;
-using Migrator.Framework.SchemaBuilder;
 using NLog;
 
 namespace Migrator.Providers
@@ -47,8 +46,6 @@ namespace Migrator.Providers
 
         public abstract Dialect Dialect { get; }
 
-        public string ConnectionString { get { return _connectionString; } }
-
         public Logger Logger { get; private set; }
 
 
@@ -71,12 +68,12 @@ namespace Migrator.Providers
             return columns.ToArray();
         }
 
-        public virtual Column GetColumnByName(string table, string columnName)
+        public virtual Column GetColumn(string table, string columnName)
         {
             return Array.Find(GetColumns(table), column => column.Name == columnName);
         }
 
-        public virtual string[] GetTables()
+        public virtual IEnumerable<string> GetTables()
         {
             var tables = new List<string>();
             using (IDataReader reader = ExecuteQuery("SELECT table_name FROM information_schema.tables"))
@@ -107,11 +104,6 @@ namespace Migrator.Providers
 
         public virtual void AddTable(string name, params Column[] columns)
         {
-            AddTable(name, null, columns);
-        }
-
-        public virtual void AddTable(string name, string engine, params Column[] columns)
-        {
             if (TableExists(name)) throw new TableAlreadyExistsException(name);
 
             if (GetPrimaryKeys(columns).Count() > 1)
@@ -126,10 +118,10 @@ namespace Migrator.Providers
             }
 
             string columnsAndIndexes = JoinColumnsAndIndexes(columnProviders);
-            AddTable(name, engine, columnsAndIndexes);
+            AddTable(name,  columnsAndIndexes);
         }
 
-        public virtual void DeleteTable(string name)
+        public virtual void DropTable(string name)
         {
             if (TableExists(name))
                 ExecuteNonQuery("DROP TABLE {0}", name);
@@ -258,57 +250,11 @@ namespace Migrator.Providers
 
             foreach (var table in tables)
             {
-                DeleteTable(table);
+                DropTable(table);
             }
         }
 
-        public virtual void AddColumn(string table, string column, DbType type, int size, ColumnProperty property,
-                                      object defaultValue)
-        {
-            if (!TableExists(table))
-                throw new TableDoesntExistsException(table);
 
-            if (ColumnExists(table, column))
-                throw new ColumnAlreadyExistsException(table, column);
-
-            ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(new Column(column, type, size, property, defaultValue));
-
-            AddColumn(table, mapper.ColumnSql);
-        }
-
-
-        public virtual void AddColumn(string table, string column, DbType type)
-        {
-            AddColumn(table, column, type, 0, ColumnProperty.Null, null);
-        }
-
-        public virtual void AddColumn(string table, string column, DbType type, int size)
-        {
-            AddColumn(table, column, type, size, ColumnProperty.Null, null);
-        }
-
-        public virtual void AddColumn(string table, string column, DbType type, object defaultValue)
-        {
-            if (ColumnExists(table, column))
-            {
-                Logger.Warn("Column {0}.{1} already exists", table, column);
-                return;
-            }
-
-            ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(new Column(column, type, defaultValue));
-
-            AddColumn(table, mapper.ColumnSql);
-        }
-
-        public virtual void AddColumn(string table, string column, DbType type, ColumnProperty property)
-        {
-            AddColumn(table, column, type, 0, property, null);
-        }
-
-        public virtual void AddColumn(string table, string column, DbType type, int size, ColumnProperty property)
-        {
-            AddColumn(table, column, type, size, property, null);
-        }
 
         public void AddPrimaryKey(string tableName, string columnName)
         {
@@ -537,32 +483,18 @@ namespace Migrator.Providers
             }
         }
 
-        public virtual IDataReader Select(string what, string from)
-        {
-            return Select(what, from, "1=1");
-        }
-
-        public virtual IDataReader Select(string what, string from, string where)
+        public virtual IDataReader Select(string what, string from, string where = "1=1")
         {
             return ExecuteQuery("SELECT {0} FROM {1} WHERE {2}", what, from, where);
         }
 
-        public object SelectScalar(string what, string from)
-        {
-            return SelectScalar(what, from, "1=1");
-        }
-
-        public virtual object SelectScalar(string what, string from, string where)
+        public virtual object SelectScalar(string what, string from, string where = "1=1")
         {
             return ExecuteScalar("SELECT {0} FROM {1} WHERE {2}", what, from, where);
         }
 
-        public virtual int Update(string table, string[] columns, string[] values)
-        {
-            return Update(table, columns, values, null);
-        }
 
-        public virtual int Update(string table, string[] columns, string[] values, string where)
+        public virtual int Update(string table, string[] columns, string[] values, string where = null)
         {
             string namesAndValues = JoinColumnsAndValues(columns, values);
 
@@ -756,7 +688,15 @@ namespace Migrator.Providers
 
         public virtual void AddColumn(string table, Column column)
         {
-            AddColumn(table, column.Name, column.Type, column.Size, column.ColumnProperty, column.DefaultValue);
+            if (!TableExists(table))
+                throw new TableDoesntExistsException(table);
+
+            if (ColumnExists(table, column.Name))
+                throw new ColumnAlreadyExistsException(table, column.Name);
+
+            ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(column);
+
+            AddColumn(table, mapper.ColumnSql);
         }
 
         public virtual void AddForeignKey(string primaryTable, string refTable)
@@ -774,12 +714,6 @@ namespace Migrator.Providers
             return BuildCommand(null);
         }
 
-        public virtual void ExecuteSchemaBuilder(SchemaBuilder builder)
-        {
-            foreach (ISchemaBuilderExpression expr in builder.Expressions)
-                expr.Create(this);
-        }
-
         public void Dispose()
         {
             if (Connection != null && Connection.State != ConnectionState.Closed)
@@ -789,7 +723,7 @@ namespace Migrator.Providers
             }
         }
 
-        public virtual string QuoteColumnNameIfRequired(string name)
+        private string QuoteColumnNameIfRequired(string name)
         {
             if (Dialect.ColumnNameNeedsQuote || Dialect.IsReservedWord(name))
             {
@@ -798,7 +732,7 @@ namespace Migrator.Providers
             return name;
         }
 
-        public virtual string QuoteTableNameIfRequired(string name)
+        private string QuoteTableNameIfRequired(string name)
         {
             if (Dialect.TableNameNeedsQuote || Dialect.IsReservedWord(name))
             {
@@ -807,24 +741,7 @@ namespace Migrator.Providers
             return name;
         }
 
-        public virtual string Encode(Guid guid)
-        {
-            return guid.ToString();
-        }
-
-        public virtual string[] QuoteColumnNamesIfRequired(params string[] columnNames)
-        {
-            var quotedColumns = new string[columnNames.Length];
-
-            for (int i = 0; i < columnNames.Length; i++)
-            {
-                quotedColumns[i] = QuoteColumnNameIfRequired(columnNames[i]);
-            }
-
-            return quotedColumns;
-        }
-
-        protected virtual void AddTable(string table, string engine, string columns)
+        protected void AddTable(string table, string columns)
         {
             table = Dialect.TableNameNeedsQuote ? Dialect.Quote(table) : table;
             string sqlCreate = String.Format("CREATE TABLE {0} ({1})", table, columns);

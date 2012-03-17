@@ -1,5 +1,7 @@
 using System.Data;
+using FluentAssertions;
 using Migrator.Framework;
+using Migrator.Providers;
 using Migrator.Tests.ProvidersWithoutConstraints;
 using NUnit.Framework;
 
@@ -8,7 +10,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
     /// <summary>
     /// Base class for Provider tests for all tests including constraint oriented tests.
     /// </summary>
-    public abstract class TransformationProviderWithConstraintTestBase<TProvider> : TransformationProviderTestBase<TProvider> where TProvider: ITransformationProvider
+    public abstract class TransformationProviderWithConstraintTestBase<TProvider> : TransformationProviderTestBase<TProvider> where TProvider: TransformationProviderBase
     {
         public void AddForeignKey()
         {
@@ -47,7 +49,8 @@ namespace Migrator.Tests.ProvidersWithConstraints
         [Test]
         public void AddUniqueColumn()
         {
-            _provider.AddColumn("TestTwo", "Test", DbType.String, 50, ColumnProperty.Unique);
+            _provider.AddColumn(TestTableName, new Column("Test", DbType.String, 50, ColumnProperty.Unique));
+            _provider.GetColumn(TestTableName, "Test").ColumnProperty.Should().Be(ColumnProperty.Unique);
         }
 
         [Test]
@@ -141,7 +144,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
             Assert.IsTrue(_provider.TableExists("Test"), "Table doesn't exist");
             Assert.IsTrue(_provider.PrimaryKeyExists("Test", "PK_Test"), "Constraint doesn't exist");
 
-            Column column = _provider.GetColumnByName("Test", "Name");
+            Column column = _provider.GetColumn("Test", "Name");
             Assert.IsNotNull(column);
             Assert.IsTrue((column.ColumnProperty & ColumnProperty.Null) == ColumnProperty.Null);
         }

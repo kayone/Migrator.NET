@@ -43,9 +43,9 @@ namespace Migrator.Providers.SQLite
             string[] colNames = ParseSqlForColumnNames(newColDefs);
             string colNamesSql = String.Join(",", colNames);
 
-            AddTable(table + "_temp", null, colDefsSql);
+            AddTable(table + "_temp",  colDefsSql);
             ExecuteQuery(String.Format("INSERT INTO {0}_temp SELECT {1} FROM {0}", table, colNamesSql));
-            DeleteTable(table);
+            DropTable(table);
             ExecuteQuery(String.Format("ALTER TABLE {0}_temp RENAME TO {0}", table));
         }
 
@@ -87,7 +87,7 @@ namespace Migrator.Providers.SQLite
             return false;
         }
 
-        public override string[] GetTables()
+        public override IEnumerable<string> GetTables()
         {
             var tables = new List<string>();
 
@@ -99,7 +99,7 @@ namespace Migrator.Providers.SQLite
                 }
             }
 
-            return tables.ToArray();
+            return tables;
         }
 
         public override Dialect Dialect
@@ -219,7 +219,7 @@ namespace Migrator.Providers.SQLite
 
             foreach (var table in tables)
             {
-                DeleteTable(table);
+                DropTable(table);
             }
         }
     }
