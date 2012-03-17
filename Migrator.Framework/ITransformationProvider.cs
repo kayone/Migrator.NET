@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using Migrator.Providers;
 using NLog;
 
 namespace Migrator.Framework
@@ -11,6 +12,8 @@ namespace Migrator.Framework
     public interface ITransformationProvider : IDisposable
     {
         IDbConnection Connection { get; set; }
+
+        Dialect Dialect { get; }
 
         /// <summary>
         /// The list of Migrations currently applied to the database.
@@ -513,9 +516,40 @@ namespace Migrator.Framework
         /// <returns></returns>
         string Encode(Guid guid);
 
+        /// <summary>
+        /// Change the target database
+        /// </summary>
+        /// <param name="databaseName">Name of the new target database</param>
+        void SwitchDatabase(string databaseName);
+
+
+        /// <summary>
+        /// Get a list of databases available on the server
+        /// </summary>
+        List<string> GetDatabases();
+
+        /// <summary>
+        /// Checks to see if a database with specific name exists on the server
+        /// </summary>
+        bool DatabaseExists(string name);
+
+        /// <summary>
+        /// Create a new database on the server
+        /// </summary>
+        /// <param name="databaseName">Name of the new database</param>
+        void CreateDatabases(string databaseName);
+
+        /// <summary>
+        /// Delete a database from the server
+        /// </summary>
+        /// <param name="databaseName">Name of the database to delete</param>
+        void DropDatabases(string databaseName);
+
+
         bool IndexExists(string indexName, string tableName);
         void AddIndex(string name, string table, params string[] columns);
 
         void WipeDatabase(string databaseName);
+        List<string> ExecuteStringQuery(string sql, params object[] args);
     }
 }

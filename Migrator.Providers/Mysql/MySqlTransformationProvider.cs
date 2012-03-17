@@ -10,7 +10,7 @@ namespace Migrator.Providers.Mysql
     /// <summary>
     /// Summary description for MySqlTransformationProvider.
     /// </summary>
-    public class MySqlTransformationProvider : TransformationProvider
+    public class MySqlTransformationProvider : TransformationProviderBase
     {
         public MySqlTransformationProvider(string connectionString)
             : base(connectionString)
@@ -20,7 +20,7 @@ namespace Migrator.Providers.Mysql
             Connection.Open();
         }
 
-        protected override Dialect Dialect
+        public override Dialect Dialect
         {
             get { return new MysqlDialect(); }
         }
@@ -159,6 +159,11 @@ namespace Migrator.Providers.Mysql
             {
                 ExecuteNonQuery(String.Format("ALTER TABLE {0} CHANGE {1} {2} {3}", tableName, oldColumnName, newColumnName, definition));
             }
+        }
+
+        public override List<string> GetDatabases()
+        {
+            throw new NotImplementedException();
         }
     }
 }

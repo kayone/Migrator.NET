@@ -37,5 +37,9 @@ namespace Migrator.Providers.SQLite
 			get { return false; }
 		}
 
+	    public override bool SupportsMultiDb
+	    {
+            get { return false; }
+	    }
 	}
 }

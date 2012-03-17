@@ -25,7 +25,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
     {
         protected override SqlServerCeTransformationProvider Provider()
         {
-          return new SqlServerCeTransformationProvider(ConnectionString); 
+            return new SqlServerCeTransformationProvider(ConnectionString);
         }
 
         public virtual string ConnectionString

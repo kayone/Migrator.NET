@@ -11,7 +11,7 @@ namespace Migrator.Providers.SQLite
     /// <summary>
     /// Summary description for SQLiteTransformationProvider.
     /// </summary>
-    public class SQLiteTransformationProvider : TransformationProvider
+    public class SQLiteTransformationProvider : TransformationProviderBase
     {
         public SQLiteTransformationProvider(string connectionString)
             : base(connectionString)
@@ -86,6 +86,11 @@ namespace Migrator.Providers.SQLite
             RemoveColumn(table, tempColumn);
         }
 
+        public override List<string> GetDatabases()
+        {
+            throw new NotSupportedException();
+        }
+
         public override bool ConstraintExists(string table, string name)
         {
             return false;
@@ -106,7 +111,7 @@ namespace Migrator.Providers.SQLite
             return tables.ToArray();
         }
 
-        protected override Dialect Dialect
+        public override Dialect Dialect
         {
             get { return new SQLiteDialect(); }
         }

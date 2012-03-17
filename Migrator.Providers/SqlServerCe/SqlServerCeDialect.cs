@@ -17,5 +17,11 @@ namespace Migrator.Providers.SqlServerCe
             RegisterColumnType(DbType.String, 1073741823, "NTEXT");
             RegisterColumnType(DbType.Binary, 2147483647, "IMAGE");
 		}
+
+
+        public override bool SupportsMultiDb
+        {
+            get { return false; }
+        }
 	}
 }

@@ -46,7 +46,12 @@ namespace Migrator.Providers.SqlServer
 			get { return false; }
 		}
 
-		public override bool ColumnNameNeedsQuote
+	    public override bool SupportsMultiDb
+	    {
+            get { return true; }
+	    }
+
+	    public override bool ColumnNameNeedsQuote
 		{
 			get { return true; }
 		}

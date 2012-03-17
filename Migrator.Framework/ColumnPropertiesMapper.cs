@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using Migrator.Framework;
 
-namespace Migrator.Providers
+namespace Migrator.Framework
 {
 	/// <summary>
 	/// This is basically a just a helper base class
-	/// per-database implementors may want to override ColumnSql
+	/// per-database implementers may want to override ColumnSql
 	/// </summary>
 	public class ColumnPropertiesMapper
 	{

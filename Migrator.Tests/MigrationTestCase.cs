@@ -24,7 +24,7 @@ namespace Migrator.Tests
 	{
 		Migrator _migrator;
 
-		protected abstract TransformationProvider TransformationProvider { get; }
+		protected abstract TransformationProviderBase TransformationProvider { get; }
 		protected abstract string ConnectionString { get; }
 		protected abstract Assembly MigrationAssembly { get; }
 

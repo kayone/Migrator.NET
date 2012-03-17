@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using Migrator.Framework;
 using Migrator.Framework.Exceptions;
 
 namespace Migrator.Providers.SqlServer
@@ -22,7 +23,7 @@ namespace Migrator.Providers.SqlServer
     /// <summary>
     /// Migration transformations provider for Microsoft SQL Server.
     /// </summary>
-    public class SqlServerTransformationProvider : TransformationProvider
+    public class SqlServerTransformationProvider : TransformationProviderBase
     {
         public const string DefaultSchema = "dbo";
 
@@ -59,12 +60,17 @@ namespace Migrator.Providers.SqlServer
             base.RemoveColumn(table, column);
         }
 
+        public override List<string> GetDatabases()
+        {
+            return ExecuteStringQuery("SELECT name FROM sys.databases");
+        }
+
         protected override void DoRenameColumn(string tableName, string oldColumnName, string newColumnName)
         {
             ExecuteNonQuery(String.Format("EXEC sp_rename '{0}.{1}', '{2}', 'COLUMN'", tableName, oldColumnName, newColumnName));
         }
 
-        protected override Dialect Dialect
+        public override Dialect Dialect
         {
             get { return new SqlServerDialect(); }
         }

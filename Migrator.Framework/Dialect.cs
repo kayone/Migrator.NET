@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Migrator.Framework;
+using Migrator.Providers;
 
-namespace Migrator.Providers
+namespace Migrator.Framework
 {
 	/// <summary>
 	/// Defines the implementations specific details for a particular database.
@@ -52,6 +52,11 @@ namespace Migrator.Providers
 		{
 			get { return true; }
 		}
+
+	    public abstract bool SupportsMultiDb { get; }
+	    
+	      
+	    
 
 		public virtual string QuoteTemplate
 		{

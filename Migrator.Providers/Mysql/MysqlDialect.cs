@@ -62,6 +62,11 @@ namespace Migrator.Providers.Mysql
             AddReservedWords("KEY");
         }
 
+        public override bool SupportsMultiDb
+        {
+            get { return true; }
+        }
+
         public override string QuoteTemplate
         {
             get { return "`{0}`"; }

@@ -11,13 +11,10 @@
 
 #endregion
 
-using System;
-using System.Configuration;
 using System.Data;
 using FluentAssertions;
 using Migrator.Framework;
 using Migrator.Providers;
-using Migrator.Providers.SQLite;
 using Migrator.Providers.SqlServer;
 using NUnit.Framework;
 
@@ -34,39 +31,39 @@ namespace Migrator.Tests.ProvidersWithConstraints
 
         public virtual string ConnectionString
         {
-            get { return @"Data Source=localhost\SQLExpress;Integrated Security=True;Database=MgTest;"; }
+            get { return @"Data Source=localhost\SQLExpress;Integrated Security=True;Database=Master;"; }
         }
 
-        //[Test]
-        //public void ByteColumnWillBeCreatedAsBlob()
-        //{
-        //    Provider.AddColumn("TestTwo", "BlobColumn", DbType.Byte);
-        //    Assert.IsTrue(Provider.ColumnExists("TestTwo", "BlobColumn"));
-        //}
+        [Test]
+        public void ByteColumnWillBeCreatedAsBlob()
+        {
+            _provider.AddColumn("TestTwo", "BlobColumn", DbType.Byte);
+            Assert.IsTrue(_provider.ColumnExists("TestTwo", "BlobColumn"));
+        }
 
-        //[Test]
-        //public void QuoteCreatesProperFormat()
-        //{
-        //    Dialect dialect = new SqlServerDialect();
-        //    dialect.Quote("foo").Should().Be("[foo]");
-        //}
+        [Test]
+        public void QuoteCreatesProperFormat()
+        {
+            Dialect dialect = new SqlServerDialect();
+            dialect.Quote("foo").Should().Be("[foo]");
+        }
 
-        //[Test]
-        //public void TableExistsShouldWorkWithBracketsAndSchemaNameAndTableName()
-        //{
-        //    Provider.TableExists("[dbo].[TestTwo]").Should().BeTrue();
-        //}
+        [Test]
+        public void TableExistsShouldWorkWithBracketsAndSchemaNameAndTableName()
+        {
+            _provider.TableExists("[dbo].[TestTwo]").Should().BeTrue();
+        }
 
-        //[Test]
-        //public void TableExistsShouldWorkWithSchemaNameAndTableName()
-        //{
-        //    Assert.IsTrue(Provider.TableExists("dbo.TestTwo"));
-        //}
+        [Test]
+        public void TableExistsShouldWorkWithSchemaNameAndTableName()
+        {
+            Assert.IsTrue(_provider.TableExists("dbo.TestTwo"));
+        }
 
-        //[Test]
-        //public void TableExistsShouldWorkWithTableNamesWithBracket()
-        //{
-        //    Assert.IsTrue(Provider.TableExists("[TestTwo]"));
-        //}
+        [Test]
+        public void TableExistsShouldWorkWithTableNamesWithBracket()
+        {
+            Assert.IsTrue(_provider.TableExists("[TestTwo]"));
+        }
     }
 }

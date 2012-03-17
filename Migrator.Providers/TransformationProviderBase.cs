@@ -27,7 +27,7 @@ namespace Migrator.Providers
     /// Base class for every transformation providers.
     /// A 'transformation' is an operation that modifies the database.
     /// </summary>
-    public abstract class TransformationProvider : ITransformationProvider
+    public abstract class TransformationProviderBase : ITransformationProvider
     {
         protected readonly string _connectionString;
 
@@ -38,15 +38,14 @@ namespace Migrator.Providers
 
         IDbTransaction _transaction;
 
-        public TransformationProvider(string connectionString)
+        public TransformationProviderBase(string connectionString)
         {
 
             _connectionString = connectionString;
             Logger = LogManager.GetCurrentClassLogger();
         }
 
-        protected abstract Dialect Dialect { get; }
-
+        public abstract Dialect Dialect { get; }
 
         public string ConnectionString { get { return _connectionString; } }
 
@@ -205,6 +204,28 @@ namespace Migrator.Providers
         public bool TableExists(string table)
         {
             return GetTables().Any(c => String.Equals(c, table, StringComparison.CurrentCultureIgnoreCase));
+        }
+
+        public void SwitchDatabase(string databaseName)
+        {
+            Connection.ChangeDatabase(databaseName);
+        }
+
+        public abstract List<string> GetDatabases();
+
+        public bool DatabaseExists(string name)
+        {
+            return GetDatabases().Any(c => c == name);
+        }
+
+        public virtual void CreateDatabases(string databaseName)
+        {
+            ExecuteNonQuery("CREATE DATABASE {0}", databaseName);
+        }
+
+        public virtual void DropDatabases(string databaseName)
+        {
+            ExecuteNonQuery("DROP DATABASE {0}", databaseName);
         }
 
         public virtual bool IndexExists(string indexName, string tableName)
@@ -474,6 +495,30 @@ namespace Migrator.Providers
                     throw new Exception("Failed to execute sql statement: " + sql, ex);
                 }
             }
+        }
+
+        public List<string> ExecuteStringQuery(string sql, params object[] args)
+        {
+            var values = new List<string>();
+
+            using (var reader = ExecuteQuery(sql, args))
+            {
+                while (reader.Read())
+                {
+                    var value = reader[0];
+
+                    if (value == null || value == DBNull.Value)
+                    {
+                        values.Add(null);
+                    }
+                    else
+                    {
+                        values.Add(value.ToString());
+                    }
+                }
+            }
+
+            return values;
         }
 
         public virtual object ExecuteScalar(string sql, params object[] args)

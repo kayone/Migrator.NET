@@ -12,6 +12,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlServerCe;
 using Migrator.Framework;
@@ -45,7 +46,7 @@ namespace Migrator.Providers.SqlServerCe
             }
         }
 
-        protected override Dialect Dialect
+        public override Dialect Dialect
         {
             get { return new SqlServerCeDialect(); }
         }
@@ -53,6 +54,12 @@ namespace Migrator.Providers.SqlServerCe
         protected string GetSchemaName(string longTableName)
         {
             throw new NotSupportedException("SQL CE does not support database schemas.");
+        }
+
+
+        public override List<string> GetDatabases()
+        {
+            return new List<string>();
         }
 
 

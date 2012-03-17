@@ -13,6 +13,8 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
 {
     public abstract class TransformationProviderTestBase<TProvider> : LoggingTest where TProvider : ITransformationProvider
     {
+        private const string TEST_DB_NAME = "MigUnitTest";
+
         protected abstract TProvider Provider();
 
         protected TProvider _provider;
@@ -34,7 +36,17 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         public void TransformationProviderBaseSetup()
         {
             _provider = Provider();
-            _provider.WipeDatabase(_provider.Connection.Database);
+
+            if (_provider.Dialect.SupportsMultiDb)
+            {
+                if (_provider.DatabaseExists(TEST_DB_NAME))
+                {
+                    _provider.DropDatabases(TEST_DB_NAME);
+                }
+
+                _provider.CreateDatabases(TEST_DB_NAME);
+                _provider.SwitchDatabase(TEST_DB_NAME);
+            }
 
             GivenTestTable();
         }
