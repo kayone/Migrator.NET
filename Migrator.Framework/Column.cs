@@ -15,12 +15,8 @@ using System.Data;
 
 namespace Migrator.Framework
 {
-    public class Column : IColumn
+    public class Column
     {
-        public Column(string name)
-        {
-            Name = name;
-        }
 
         public Column(string name, DbType type)
         {

@@ -11,24 +11,15 @@
 
 #endregion
 
-using System.Data;
+using System;
 
-namespace Migrator.Framework
+namespace Migrator.Framework.Exceptions
 {
-	public interface IColumn
-	{
-		ColumnProperty ColumnProperty { get; set; }
-
-		string Name { get; set; }
-
-		DbType Type { get; set; }
-
-		int Size { get; set; }
-
-		bool IsIdentity { get; }
-
-		bool IsPrimaryKey { get; }
-
-		object DefaultValue { get; set; }
-	}
+    public class ForeignKeyAlreadyExistsException : Exception
+    {
+        public ForeignKeyAlreadyExistsException(string table, string keyName)
+            : base(string.Format("ForeignKey with the same name '{0}' already exists in table '{1}'", keyName, table))
+        {
+        }
+    }
 }

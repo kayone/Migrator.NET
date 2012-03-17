@@ -22,8 +22,7 @@ namespace Migrator.Providers.SQLite
             Connection.Open();
         }
 
-        public override void AddForeignKey(string name, string primaryTable, string[] primaryColumns, string refTable,
-                                           string[] refColumns, ForeignKeyConstraintType constraintType)
+        public override void AddForeignKey(ForeignKey foreignKey)
         {
             // NOOP Because SQLite doesn't support foreign keys
         }

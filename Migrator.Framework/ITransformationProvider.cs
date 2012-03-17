@@ -24,145 +24,54 @@ namespace Migrator.Framework
         /// </summary>
         Logger Logger { get; }
 
-        /// <summary>
-        /// Add a column to an existing table
-        /// </summary>
-        /// <param name="tableName">The name of the table that will get the new column</param>
-        /// <param name="column">The column to be added</param>
-        void AddColumn(string tableName, Column column);
+        #region Databases
 
         /// <summary>
-        /// Add a foreign key constraint
+        /// Get a list of databases available on the server
         /// </summary>
-        /// <param name="name">The name of the foreign key. e.g. FK_TABLE_REF</param>
-        /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
-        /// <param name="foreignColumns">The columns that are the foreign keys (eg. FK_id)</param>
-        /// <param name="primaryTable">The table that holds the primary keys (eg. Table.PK_id)</param>
-        /// <param name="primaryColumns">The columns that are the primary keys (eg. PK_id)</param>
-        void AddForeignKey(string name, string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns);
+        List<string> GetDatabases();
 
         /// <summary>
-        /// Add a foreign key constraint
+        /// Checks to see if a database with specific name exists on the server
         /// </summary>
-        /// <param name="name">The name of the foreign key. e.g. FK_TABLE_REF</param>
-        /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
-        /// <param name="foreignColumns">The columns that are the foreign keys (eg. FK_id)</param>
-        /// <param name="primaryTable">The table that holds the primary keys (eg. Table.PK_id)</param>
-        /// <param name="primaryColumns">The columns that are the primary keys (eg. PK_id)</param>
-        /// <param name="constraintType">Constraint parameters</param>
-        void AddForeignKey(string name, string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns, ForeignKeyConstraintType constraintType);
+        bool DatabaseExists(string name);
 
         /// <summary>
-        /// Add a foreign key constraint
+        /// Change the target database
         /// </summary>
-        /// 
-        /// <param name="name">The name of the foreign key. e.g. FK_TABLE_REF</param>
-        /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
-        /// <param name="foreignColumn">The column that is the foreign key (eg. FK_id)</param>
-        /// <param name="primaryTable">The table that holds the primary keys (eg. Table.PK_id)</param>
-        /// <param name="primaryColumn">The column that is the primary key (eg. PK_id)</param>
-        void AddForeignKey(string name, string foreignTable, string foreignColumn, string primaryTable, string primaryColumn);
+        /// <param name="databaseName">Name of the new target database</param>
+        void SwitchDatabase(string databaseName);
 
         /// <summary>
-        /// Add a foreign key constraint
+        /// Create a new database on the server
         /// </summary>
-        /// <param name="name">The name of the foreign key. e.g. FK_TABLE_REF</param>
-        /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
-        /// <param name="foreignColumn">The column that is the foreign key (eg. FK_id)</param>
-        /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
-        /// <param name="primaryColumn">The column that is the primary key (eg. PK_id)</param>
-        /// <param name="constraintType">Constraint parameters</param>
-        void AddForeignKey(string name, string foreignTable, string foreignColumn, string primaryTable, string primaryColumn, ForeignKeyConstraintType constraintType);
+        /// <param name="databaseName">Name of the new database</param>
+        void CreateDatabases(string databaseName);
 
         /// <summary>
-        /// Add a foreign key constraint when you don't care about the name of the constraint.
-        /// Warning: This will prevent you from dropping the constraint since you won't know the name.
+        /// Delete a database from the server
         /// </summary>
-        /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
-        /// <param name="foreignColumn">The column that is the foreign key (eg. FK_id)</param>
-        /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
-        /// <param name="primaryColumn">The column that is the primary key (eg. PK_id)</param>
-        void AddForeignKey(string foreignTable, string foreignColumn, string primaryTable, string primaryColumn);
+        /// <param name="databaseName">Name of the database to delete</param>
+        void DropDatabases(string databaseName);
+
+        void WipeDatabase(string databaseName);
+
+        #endregion
+
+        #region Tables
 
         /// <summary>
-        /// Add a foreign key constraint when you don't care about the name of the constraint.
-        /// Warning: This will prevent you from dropping the constraint since you won't know the name.
+        /// Get the names of all of the tables
         /// </summary>
-        /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
-        /// <param name="foreignColumns">The columns that are the foreign keys (eg. FK_id)</param>
-        /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
-        /// <param name="primaryColumns">The column that is the primary key (eg. PK_id)</param>
-        void AddForeignKey(string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns);
+        /// <returns>The names of all the tables.</returns>
+        IEnumerable<string> GetTables();
 
         /// <summary>
-        /// Add a foreign key constraint when you don't care about the name of the constraint.
-        /// Warning: This will prevent you from dropping the constraint since you won't know the name.
+        /// Check if a table already exists
         /// </summary>
-        /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
-        /// <param name="foreignColumns">The columns that are the foreign keys (eg. FK_id)</param>
-        /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
-        /// <param name="primaryColumns">The columns that are the primary keys (eg. PK_id)</param>
-        /// <param name="constraintType">Constraint parameters</param>
-        void AddForeignKey(string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns, ForeignKeyConstraintType constraintType);
-
-        /// <summary>
-        /// Add a foreign key constraint when you don't care about the name of the constraint.
-        /// Warning: This will prevent you from dropping the constraint since you won't know the name.
-        /// </summary>
-        /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
-        /// <param name="foreignColumn">The columns that are the foreign keys (eg. FK_id)</param>
-        /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
-        /// <param name="primaryColumn">The column that is the primary key (eg. PK_id)</param>
-        /// <param name="constraintType">Constraint parameters</param>
-        void AddForeignKey(string foreignTable, string foreignColumn, string primaryTable, string primaryColumn,
-                                ForeignKeyConstraintType constraintType);
-
-        /// <summary>
-        /// Add a foreign key constraint when you don't care about the name of the constraint.
-        /// Warning: This will prevent you from dropping the constraint since you won't know the name.
-        ///
-        /// The current expectations are that there is a column named the same as the foreignTable present in
-        /// the table. This is subject to change because I think it's not a good convention.
-        /// </summary>
-        /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
-        /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
-        void AddForeignKey(string foreignTable, string primaryTable);
-
-        /// <summary>
-        /// Add a foreign key constraint when you don't care about the name of the constraint.
-        /// Warning: This will prevent you from dropping the constraint since you won't know the name.
-        ///
-        /// The current expectations are that there is a column named the same as the foreignTable present in
-        /// the table. This is subject to change because I think it's not a good convention.
-        /// </summary>
-        /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
-        /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
-        /// <param name="constraintType"></param>
-        void AddForeignKey(string foreignTable, string primaryTable, ForeignKeyConstraintType constraintType);
-
-        /// <summary>
-        /// Add a primary key to a table
-        /// </summary>
-        /// <param name="tableName">The name of the table that will get the primary key.</param>
-        /// <param name="columnName">The name of the column that will be the primary key.</param>
-        void AddPrimaryKey(string tableName, string columnName);
-
-        /// <summary>
-        /// Add a constraint to a table
-        /// </summary>
-        /// <param name="name">The name of the constraint to add.</param>
-        /// <param name="table">The name of the table that will get the constraint</param>
-        /// <param name="columns">The name of the column or columns that will get the constraint.</param>
-        void AddUniqueConstraint(string name, string table, params string[] columns);
-
-        /// <summary>
-        /// Add a constraint to a table
-        /// </summary>
-        /// <param name="name">The name of the constraint to add.</param>
-        /// <param name="table">The name of the table that will get the constraint</param>
-        /// <param name="checkSql">The check constraint definition.</param>
-        void AddCheckConstraint(string name, string table, string checkSql);
-
+        /// <param name="tableName">The name of the table that you want to check on.</param>
+        /// <returns></returns>
+        bool TableExists(string tableName);
 
         /// <summary>
         /// Add a table
@@ -172,71 +81,22 @@ namespace Migrator.Framework
         void AddTable(string name, params Column[] columns);
 
 
+        /// <summary>
+        /// Remove an existing table
+        /// </summary>
+        /// <param name="tableName">The name of the table</param>
+        void DropTable(string tableName);
 
         /// <summary>
-        /// Start a transaction
+        /// Rename an existing table
         /// </summary>
-        void BeginTransaction();
+        /// <param name="oldName">The old name of the table</param>
+        /// <param name="newName">The new name of the table</param>
+        void RenameTable(string oldName, string newName);
 
-        /// <summary>
-        /// Change the definition of an existing column.
-        /// </summary>
-        /// <param name="table">The name of the table that will get the new column</param>
-        /// <param name="column">An instance of a <see cref="Column">Column</see> with the specified properties and the name of an existing column</param>
-        void ChangeColumn(string table, Column column);
+        #endregion
 
-        /// <summary>
-        /// Check to see if a column exists
-        /// </summary>
-        /// <param name="table"></param>
-        /// <param name="column"></param>
-        /// <returns></returns>
-        bool ColumnExists(string table, string column);
-
-        /// <summary>
-        /// Commit the running transaction
-        /// </summary>
-        void Commit();
-
-        /// <summary>
-        /// Check to see if a constraint exists
-        /// </summary>
-        /// <param name="name">The name of the constraint</param>
-        /// <param name="table">The table that the constraint lives on.</param>
-        /// <returns></returns>
-        bool ConstraintExists(string table, string name);
-
-        /// <summary>
-        /// Check to see if a primary key constraint exists on the table
-        /// </summary>
-        /// <param name="name">The name of the primary key</param>
-        /// <param name="table">The table that the constraint lives on.</param>
-        /// <returns></returns>
-        bool PrimaryKeyExists(string table, string name);
-
-        /// <summary>
-        /// Execute an arbitrary SQL query
-        /// </summary>
-        /// <param name="sql">The SQL to execute.</param>
-        /// <param name="args"> </param>
-        /// <returns></returns>
-        int ExecuteNonQuery(string sql, params object[] args);
-
-        /// <summary>
-        /// Execute an arbitrary SQL query
-        /// </summary>
-        /// <param name="sql">The SQL to execute.</param>
-        /// <param name="args"> </param>
-        /// <returns></returns>
-        IDataReader ExecuteQuery(string sql, params object[] args);
-
-        /// <summary>
-        /// Execute an arbitrary SQL query
-        /// </summary>
-        /// <param name="sql">The SQL to execute.</param>
-        /// <param name="args"> </param>
-        /// <returns>A single value that is returned.</returns>
-        object ExecuteScalar(string sql, params object[] args);
+        #region Column
 
         /// <summary>
         /// Get the information about the columns in a table
@@ -254,10 +114,108 @@ namespace Migrator.Framework
         Column GetColumn(string table, string column);
 
         /// <summary>
-        /// Get the names of all of the tables
+        /// Check to see if a column exists
         /// </summary>
-        /// <returns>The names of all the tables.</returns>
-        IEnumerable<string> GetTables();
+        /// <param name="table"></param>
+        /// <param name="column"></param>
+        /// <returns></returns>
+        bool ColumnExists(string table, string column);
+
+        /// <summary>
+        /// Change the definition of an existing column.
+        /// </summary>
+        /// <param name="table">The name of the table that will get the new column</param>
+        /// <param name="column">An instance of a <see cref="Column">Column</see> with the specified properties and the name of an existing column</param>
+        void ChangeColumn(string table, Column column);
+
+        /// <summary>
+        /// Add a column to an existing table
+        /// </summary>
+        /// <param name="tableName">The name of the table that will get the new column</param>
+        /// <param name="column">The column to be added</param>
+        void AddColumn(string tableName, Column column);
+
+        /// <summary>
+        /// Remove an existing column from a table
+        /// </summary>
+        /// <param name="table">The name of the table to remove the column from</param>
+        /// <param name="column">The column to remove</param>
+        void RemoveColumn(string table, string column);
+
+        /// <summary>
+        /// Rename an existing table
+        /// </summary>
+        /// <param name="tableName">The name of the table</param>
+        /// <param name="oldColumnName">The old name of the column</param>
+        /// <param name="newColumnName">The new name of the column</param>
+        void RenameColumn(string tableName, string oldColumnName, string newColumnName);
+
+        #endregion
+
+        #region Constraints
+
+        /// <summary>
+        /// Add a foreign key constraint
+        /// </summary>
+        void AddForeignKey(ForeignKey foreignKey);
+
+        /// <summary>
+        /// Remove an existing foreign key constraint
+        /// </summary>
+        /// <param name="table">The table that contains the foreign key.</param>
+        /// <param name="name">The name of the foreign key to remove</param>
+        void RemoveForeignKey(string table, string name);
+
+        /// <summary>
+        /// Check to see if a constraint exists
+        /// </summary>
+        /// <param name="name">The name of the constraint</param>
+        /// <param name="table">The table that the constraint lives on.</param>
+        /// <returns></returns>
+        bool ConstraintExists(string table, string name);
+
+        /// <summary>
+        /// Add a constraint to a table
+        /// </summary>
+        /// <param name="name">The name of the constraint to add.</param>
+        /// <param name="table">The name of the table that will get the constraint</param>
+        /// <param name="columns">The name of the column or columns that will get the constraint.</param>
+        void AddUniqueConstraint(string name, string table, params string[] columns);
+
+        /// <summary>
+        /// Add a constraint to a table
+        /// </summary>
+        /// <param name="name">The name of the constraint to add.</param>
+        /// <param name="table">The name of the table that will get the constraint</param>
+        /// <param name="checkSql">The check constraint definition.</param>
+        void AddCheckConstraint(string name, string table, string checkSql);
+
+        /// <summary>
+        /// Remove an existing constraint
+        /// </summary>
+        /// <param name="table">The table that contains the foreign key.</param>
+        /// <param name="name">The name of the constraint to remove</param>
+        void RemoveConstraint(string table, string name);
+
+
+        /// <summary>
+        /// Check to see if a primary key constraint exists on the table
+        /// </summary>
+        /// <param name="name">The name of the primary key</param>
+        /// <param name="table">The table that the constraint lives on.</param>
+        /// <returns></returns>
+        bool PrimaryKeyExists(string table, string name);
+
+        /// <summary>
+        /// Add a primary key to a table
+        /// </summary>
+        /// <param name="tableName">The name of the table that will get the primary key.</param>
+        /// <param name="columnName">The name of the column that will be the primary key.</param>
+        void AddPrimaryKey(string tableName, string columnName);
+
+        #endregion
+
+        #region Data
 
         /// <summary>
         /// Insert data into a table
@@ -269,13 +227,14 @@ namespace Migrator.Framework
         int Insert(string table, string[] columns, string[] values);
 
         /// <summary>
-        /// Delete data from a table
+        /// Update the values in a table
         /// </summary>
-        /// <param name="table">The table that will have the data deleted</param>
-        /// <param name="columns">The names of the columns used in a where clause</param>
-        /// <param name="values">The values in the same order as the columns</param>
+        /// <param name="table">The name of the table to update</param>
+        /// <param name="columns">The names of the columns.</param>
+        /// <param name="values">The values for the columns in the same order as the names.</param>
+        /// <param name="where">A where clause to limit the update</param>
         /// <returns></returns>
-        int DeleteData(string table, string[] columns, string[] values);
+        int Update(string table, string[] columns, string[] values, string where);
 
         /// <summary>
         /// Delete data from a table
@@ -285,6 +244,19 @@ namespace Migrator.Framework
         /// <param name="whereValue">The value for the where clause</param>
         /// <returns></returns>
         int DeleteData(string table, string whereColumn, string whereValue);
+
+        /// <summary>
+        /// Delete data from a table
+        /// </summary>
+        /// <param name="table">The table that will have the data deleted</param>
+        /// <param name="columns">The names of the columns used in a where clause</param>
+        /// <param name="values">The values in the same order as the columns</param>
+        /// <returns></returns>
+        int DeleteData(string table, string[] columns, string[] values);
+
+        #endregion
+
+        #region Migrations
 
         /// <summary>
         /// Marks a Migration version number as having been applied
@@ -298,62 +270,24 @@ namespace Migrator.Framework
         /// <param name="version">The version number of the migration that was removed</param>
         void MigrationUnApplied(long version);
 
-        /// <summary>
-        /// Remove an existing column from a table
-        /// </summary>
-        /// <param name="table">The name of the table to remove the column from</param>
-        /// <param name="column">The column to remove</param>
-        void RemoveColumn(string table, string column);
+        #endregion
+
+        #region Indexes
+
+        string AddIndex(string table, params string[] columns);
+        List<string> GetIndexes(string tableName);
+
+        #endregion
+
+        #region Execute
 
         /// <summary>
-        /// Remove an existing foreign key constraint
+        /// Execute an arbitrary SQL query
         /// </summary>
-        /// <param name="table">The table that contains the foreign key.</param>
-        /// <param name="name">The name of the foreign key to remove</param>
-        void RemoveForeignKey(string table, string name);
-
-        /// <summary>
-        /// Remove an existing constraint
-        /// </summary>
-        /// <param name="table">The table that contains the foreign key.</param>
-        /// <param name="name">The name of the constraint to remove</param>
-        void RemoveConstraint(string table, string name);
-
-        /// <summary>
-        /// Remove an existing table
-        /// </summary>
-        /// <param name="tableName">The name of the table</param>
-        void DropTable(string tableName);
-
-        /// <summary>
-        /// Rename an existing table
-        /// </summary>
-        /// <param name="oldName">The old name of the table</param>
-        /// <param name="newName">The new name of the table</param>
-        void RenameTable(string oldName, string newName);
-
-        /// <summary>
-        /// Rename an existing table
-        /// </summary>
-        /// <param name="tableName">The name of the table</param>
-        /// <param name="oldColumnName">The old name of the column</param>
-        /// <param name="newColumnName">The new name of the column</param>
-        void RenameColumn(string tableName, string oldColumnName, string newColumnName);
-
-        /// <summary>
-        /// Rollback the currently running transaction.
-        /// </summary>
-        void Rollback();
-
-        /// <summary>
-        /// Get values from a table
-        /// </summary>
-        /// <param name="what">The columns to select</param>
-        /// <param name="from">The table to select from</param>
-        /// <param name="where">The where clause to limit the selection</param>
-        /// <returns></returns>
-        IDataReader Select(string what, string from, string where);
-
+        /// <param name="sql">The SQL to execute.</param>
+        /// <param name="args"> </param>
+        /// <returns>A single value that is returned.</returns>
+        object ExecuteScalar(string sql, params object[] args);
 
         /// <summary>
         /// Get a single value from a table
@@ -364,64 +298,51 @@ namespace Migrator.Framework
         /// <returns></returns>
         object SelectScalar(string what, string from, string where);
 
-
         /// <summary>
-        /// Check if a table already exists
+        /// Execute an arbitrary SQL query
         /// </summary>
-        /// <param name="tableName">The name of the table that you want to check on.</param>
+        /// <param name="sql">The SQL to execute.</param>
+        /// <param name="args"> </param>
         /// <returns></returns>
-        bool TableExists(string tableName);
+        int ExecuteNonQuery(string sql, params object[] args);
 
         /// <summary>
-        /// Update the values in a table
+        /// Get values from a table
         /// </summary>
-        /// <param name="table">The name of the table to update</param>
-        /// <param name="columns">The names of the columns.</param>
-        /// <param name="values">The values for the columns in the same order as the names.</param>
-        /// <param name="where">A where clause to limit the update</param>
+        /// <param name="what">The columns to select</param>
+        /// <param name="from">The table to select from</param>
+        /// <param name="where">The where clause to limit the selection</param>
         /// <returns></returns>
-        int Update(string table, string[] columns, string[] values, string where);
+        IDataReader Select(string what, string from, string where);
 
         /// <summary>
-        /// Get a command instance
+        /// Execute an arbitrary SQL query
         /// </summary>
+        /// <param name="sql">The SQL to execute.</param>
+        /// <param name="args"> </param>
         /// <returns></returns>
-        IDbCommand GetCommand();
+        IDataReader ExecuteQuery(string sql, params object[] args);
 
-        /// <summary>
-        /// Change the target database
-        /// </summary>
-        /// <param name="databaseName">Name of the new target database</param>
-        void SwitchDatabase(string databaseName);
-
-
-        /// <summary>
-        /// Get a list of databases available on the server
-        /// </summary>
-        List<string> GetDatabases();
-
-        /// <summary>
-        /// Checks to see if a database with specific name exists on the server
-        /// </summary>
-        bool DatabaseExists(string name);
-
-        /// <summary>
-        /// Create a new database on the server
-        /// </summary>
-        /// <param name="databaseName">Name of the new database</param>
-        void CreateDatabases(string databaseName);
-
-        /// <summary>
-        /// Delete a database from the server
-        /// </summary>
-        /// <param name="databaseName">Name of the database to delete</param>
-        void DropDatabases(string databaseName);
-
-
-        bool IndexExists(string indexName, string tableName);
-        void AddIndex(string name, string table, params string[] columns);
-
-        void WipeDatabase(string databaseName);
         List<string> ExecuteStringQuery(string sql, params object[] args);
+        #endregion
+
+        #region Transaction
+
+        /// <summary>
+        /// Start a transaction
+        /// </summary>
+        void BeginTransaction();
+
+        /// <summary>
+        /// Commit the running transaction
+        /// </summary>
+        void Commit();
+
+        /// <summary>
+        /// Rollback the currently running transaction.
+        /// </summary>
+        void Rollback();
+
+        #endregion
     }
 }

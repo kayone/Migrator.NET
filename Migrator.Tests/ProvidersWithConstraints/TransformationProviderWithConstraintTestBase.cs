@@ -10,12 +10,12 @@ namespace Migrator.Tests.ProvidersWithConstraints
     /// <summary>
     /// Base class for Provider tests for all tests including constraint oriented tests.
     /// </summary>
-    public abstract class TransformationProviderWithConstraintTestBase<TProvider> : TransformationProviderTestBase<TProvider> where TProvider: TransformationProviderBase
+    public abstract class TransformationProviderWithConstraintTestBase<TProvider> : TransformationProviderTestBase<TProvider> where TProvider : TransformationProviderBase
     {
         public void AddForeignKey()
         {
             GivenTableWithPrimaryKey();
-            _provider.AddForeignKey("FK_Test_TestTwo", "TestTwo", "TestId", "Test", "Id");
+            _provider.AddForeignKey(new ForeignKey("TestTwo", "TestId", "Test", "Id"));
         }
 
         private void AddPrimaryKey()

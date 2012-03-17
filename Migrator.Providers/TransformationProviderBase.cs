@@ -118,7 +118,7 @@ namespace Migrator.Providers
             }
 
             string columnsAndIndexes = JoinColumnsAndIndexes(columnProviders);
-            AddTable(name,  columnsAndIndexes);
+            AddTable(name, columnsAndIndexes);
         }
 
         public virtual void DropTable(string name)
@@ -218,28 +218,30 @@ namespace Migrator.Providers
             ExecuteNonQuery("DROP DATABASE {0}", databaseName);
         }
 
-        public virtual bool IndexExists(string indexName, string tableName)
+
+
+        public bool IndexExists(string indexName, string tableName)
         {
-            try
-            {
-                var count = (int)ExecuteScalar(String.Format("SELECT COUNT(*) FROM INFORMATION_SCHEMA.Indexes WHERE Index_Name = '{0}' AND Table_Name = '{1}'  ", indexName, tableName));
-                return count == 1;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            return GetIndexes(tableName).Any(c => string.Equals(c, indexName, StringComparison.InvariantCultureIgnoreCase));
         }
 
 
-        public virtual void AddIndex(string name, string table, params string[] columns)
+        public string AddIndex(string table, params string[] columns)
         {
-            if (IndexExists(name, table))
-            {
-                Logger.Warn("Index {0} already exists", name);
-                return;
-            }
-            ExecuteNonQuery(String.Format("CREATE INDEX {0} ON {1} ({2}) ", name, table, string.Join(", ", columns)));
+            var indexName = string.Format("IDX_{0}_{1}", table, string.Join("_ ", columns));
+
+            if (IndexExists(indexName, table))
+                throw new IndexAlreadyExistsException(table, indexName);
+
+            ExecuteNonQuery(String.Format("CREATE INDEX {0} ON {1} ({2}) ", indexName, table, string.Join(", ", columns)));
+
+            return indexName;
+        }
+
+        public List<string> GetIndexes(string tableName)
+        {
+            var indexes = ExecuteStringQuery("SELECT Index_Name FROM INFORMATION_SCHEMA.Indexes WHERE Table_Name = '{0}'", tableName);
+            return indexes;
         }
 
         public virtual void WipeDatabase(string databaseName)
@@ -296,90 +298,23 @@ namespace Migrator.Providers
             ExecuteNonQuery(String.Format("ALTER TABLE {0} ADD CONSTRAINT {1} CHECK ({2}) ", table, name, checkSql));
         }
 
-        public virtual void AddForeignKey(string primaryTable, string primaryColumn, string refTable, string refColumn)
+        public virtual void AddForeignKey(ForeignKey foreignKey)
         {
-            AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumn, refTable, refColumn);
-        }
+            if (ConstraintExists(foreignKey.ForeignTable, foreignKey.Name))
+                throw new ForeignKeyAlreadyExistsException(foreignKey.ForeignTable, foreignKey.Name);
 
-        public virtual void AddForeignKey(string primaryTable, string[] primaryColumns, string refTable,
-                                               string[] refColumns)
-        {
-            AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumns, refTable, refColumns);
-        }
+            foreignKey.PrimaryTable = QuoteTableNameIfRequired(foreignKey.PrimaryTable);
+            foreignKey.ForeignTable = QuoteTableNameIfRequired(foreignKey.ForeignTable);
+            QuoteColumnNames(foreignKey.ForeignColumns);
+            QuoteColumnNames(foreignKey.PrimaryColumns);
 
-        public virtual void AddForeignKey(string primaryTable, string primaryColumn, string refTable,
-                                               string refColumn, ForeignKeyConstraintType constraintType)
-        {
-            AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumn, refTable, refColumn,
-                          constraintType);
-        }
-
-        public virtual void AddForeignKey(string primaryTable, string[] primaryColumns, string refTable,
-                                               string[] refColumns, ForeignKeyConstraintType constraintType)
-        {
-            AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumns, refTable, refColumns,
-                          constraintType);
-        }
-
-        /// <summary>
-        /// Append a foreign key (relation) between two tables.
-        /// tables.
-        /// </summary>
-        /// <param name="name">Constraint name</param>
-        /// <param name="primaryTable">Table name containing the primary key</param>
-        /// <param name="primaryColumn">Primary key column name</param>
-        /// <param name="refTable">Foreign table name</param>
-        /// <param name="refColumn">Foreign column name</param>
-        public virtual void AddForeignKey(string name, string primaryTable, string primaryColumn, string refTable,
-                                          string refColumn)
-        {
-            try
-            {
-                AddForeignKey(name, primaryTable, new[] { primaryColumn }, refTable, new[] { refColumn });
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(string.Format("Error occured while adding foreign key: \"{0}\" between table: \"{1}\" and table: \"{2}\" - see inner exception for details", name, primaryTable, refTable), ex);
-            }
-        }
-
-        /// <summary>
-        /// <see cref="ITransformationProvider.AddForeignKey(string, string, string, string, string)">
-        /// AddForeignKey(string, string, string, string, string)
-        /// </see>
-        /// </summary>
-        public virtual void AddForeignKey(string name, string primaryTable, string[] primaryColumns, string refTable, string[] refColumns)
-        {
-            AddForeignKey(name, primaryTable, primaryColumns, refTable, refColumns, ForeignKeyConstraintType.NoAction);
-        }
-
-        public virtual void AddForeignKey(string name, string primaryTable, string primaryColumn, string refTable, string refColumn, ForeignKeyConstraintType constraintType)
-        {
-            AddForeignKey(name, primaryTable, new[] { primaryColumn }, refTable, new[] { refColumn },
-                          constraintType);
-        }
-
-        public virtual void AddForeignKey(string name, string primaryTable, string[] primaryColumns, string refTable,
-                                          string[] refColumns, ForeignKeyConstraintType constraintType)
-        {
-            if (ConstraintExists(primaryTable, name))
-            {
-                Logger.Warn("Constraint {0} already exists", name);
-                return;
-            }
-
-            refTable = QuoteTableNameIfRequired(refTable);
-            primaryTable = QuoteTableNameIfRequired(primaryTable);
-            QuoteColumnNames(primaryColumns);
-            QuoteColumnNames(refColumns);
-
-            string constraintResolved = _constraintMapper.SqlForConstraint(constraintType);
+            string constraintResolved = _constraintMapper.SqlForConstraint(foreignKey.ConstraintType);
 
             ExecuteNonQuery(
                 String.Format(
                     "ALTER TABLE {0} ADD CONSTRAINT {1} FOREIGN KEY ({2}) REFERENCES {3} ({4}) ON UPDATE {5} ON DELETE {6}",
-                    primaryTable, name, String.Join(",", primaryColumns),
-                    refTable, String.Join(",", refColumns), constraintResolved, constraintResolved));
+                    foreignKey.ForeignTable, foreignKey.Name, String.Join(",", foreignKey.ForeignColumns),
+                    foreignKey.PrimaryTable, String.Join(",", foreignKey.PrimaryColumns), constraintResolved, constraintResolved));
         }
 
         /// <summary>
@@ -403,15 +338,7 @@ namespace Migrator.Providers
 
             using (IDbCommand cmd = BuildCommand(sql))
             {
-                try
-                {
-                    return cmd.ExecuteNonQuery();
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn(ex.Message);
-                    throw;
-                }
+                return cmd.ExecuteNonQuery();
             }
         }
 
@@ -428,15 +355,7 @@ namespace Migrator.Providers
             Logger.Trace(sql);
             using (IDbCommand cmd = BuildCommand(sql))
             {
-                try
-                {
-                    return cmd.ExecuteReader();
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn("query failed: {0}", cmd.CommandText);
-                    throw new Exception("Failed to execute sql statement: " + sql, ex);
-                }
+                return cmd.ExecuteReader();
             }
         }
 
@@ -699,20 +618,6 @@ namespace Migrator.Providers
             AddColumn(table, mapper.ColumnSql);
         }
 
-        public virtual void AddForeignKey(string primaryTable, string refTable)
-        {
-            AddForeignKey(primaryTable, refTable, ForeignKeyConstraintType.NoAction);
-        }
-
-        public virtual void AddForeignKey(string primaryTable, string refTable, ForeignKeyConstraintType constraintType)
-        {
-            AddForeignKey(primaryTable, refTable + "Id", refTable, "Id", constraintType);
-        }
-
-        public virtual IDbCommand GetCommand()
-        {
-            return BuildCommand(null);
-        }
 
         public void Dispose()
         {
@@ -901,10 +806,12 @@ namespace Migrator.Providers
 
         void QuoteColumnNames(string[] primaryColumns)
         {
-            for (int i = 0; i < primaryColumns.Length; i++)
+            for (var i = 0; i < primaryColumns.Length; i++)
             {
                 primaryColumns[i] = QuoteColumnNameIfRequired(primaryColumns[i]);
             }
         }
     }
+
+
 }
