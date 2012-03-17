@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using Migrator.Framework.Exceptions;
 
 namespace Migrator.Framework
 {

@@ -23,7 +23,7 @@ namespace Migrator.Providers
 	/// <code>
 	///		Names.Get(DbType)			// --> "TEXT" (default)
 	///		Names.Get(DbType,100)		// --> "VARCHAR(100)" (100 is in [0:255])
-	///		Names.Get(DbType,1000)	// --> "LONGVARCHAR(1000)" (100 is in [256:65534])
+	///		Names.Get(DbType,1000)	// --> "LONGVARCHAR(1000)" (1000 is in [256:65534])
 	///		Names.Get(DbType,100000)	// --> "TEXT" (default)
 	/// </code>
 	/// On the other hand, simply putting
@@ -40,13 +40,13 @@ namespace Migrator.Providers
 	/// </remarks>
 	public class TypeNames
 	{
-		public const string LengthPlaceHolder = "$l";
-		public const string PrecisionPlaceHolder = "$p";
-		public const string ScalePlaceHolder = "$s";
+	    private const string LengthPlaceHolder = "$l";
+	    private const string PrecisionPlaceHolder = "$p";
+	    private const string ScalePlaceHolder = "$s";
 
-		readonly Dictionary<DbType, string> defaults = new Dictionary<DbType, string>();
+		private readonly Dictionary<DbType, string> _defaults = new Dictionary<DbType, string>();
 
-		readonly Dictionary<DbType, SortedList<int, string>> weighted =
+		readonly Dictionary<DbType, SortedList<int, string>> _weighted =
 			new Dictionary<DbType, SortedList<int, string>>();
 
 		/// <summary>
@@ -57,7 +57,7 @@ namespace Migrator.Providers
 		public string Get(DbType typecode)
 		{
 			string result;
-			if (!defaults.TryGetValue(typecode, out result))
+			if (!_defaults.TryGetValue(typecode, out result))
 			{
 				throw new ArgumentException("Dialect does not support DbType." + typecode, "typecode");
 			}
@@ -78,7 +78,7 @@ namespace Migrator.Providers
 		public string Get(DbType typecode, int size, int precision, int scale)
 		{
 			SortedList<int, string> map;
-			weighted.TryGetValue(typecode, out map);
+			_weighted.TryGetValue(typecode, out map);
 			if (map != null && map.Count > 0)
 			{
 				foreach (var entry in map)
@@ -109,10 +109,10 @@ namespace Migrator.Providers
 		public void Put(DbType typecode, int capacity, string value)
 		{
 			SortedList<int, string> map;
-			if (!weighted.TryGetValue(typecode, out map))
+			if (!_weighted.TryGetValue(typecode, out map))
 			{
 				// add new ordered map
-				weighted[typecode] = map = new SortedList<int, string>();
+				_weighted[typecode] = map = new SortedList<int, string>();
 			}
 			map[capacity] = value;
 		}
@@ -124,7 +124,7 @@ namespace Migrator.Providers
 		/// <param name="value"></param>
 		public void Put(DbType typecode, string value)
 		{
-			defaults[typecode] = value;
+			_defaults[typecode] = value;
 		}
 	}
 }

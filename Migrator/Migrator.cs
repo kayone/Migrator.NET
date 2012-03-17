@@ -31,30 +31,11 @@ namespace Migrator
 		protected bool _dryrun;
 		ILogger _logger = new Logger(false);
 
-		public Migrator(string provider, string connectionString, Assembly migrationAssembly)
-			: this(provider, connectionString, migrationAssembly, false)
-		{
-		}
-
-		public Migrator(string provider, string connectionString, Assembly migrationAssembly, bool trace)
-			: this(ProviderFactory.Create(provider, connectionString), migrationAssembly, trace)
-		{
-		}
-
-		public Migrator(string provider, string connectionString, Assembly migrationAssembly, bool trace, ILogger logger)
-			: this(ProviderFactory.Create(provider, connectionString), migrationAssembly, trace, logger)
-		{
-		}
 
 		public Migrator(ITransformationProvider provider, Assembly migrationAssembly, bool trace)
-			: this(provider, migrationAssembly, trace, new Logger(trace, new ConsoleWriter()))
-		{
-		}
-
-		public Migrator(ITransformationProvider provider, Assembly migrationAssembly, bool trace, ILogger logger)
 		{
 			_provider = provider;
-			Logger = logger;
+	
 
 			_migrationLoader = new MigrationLoader(provider, migrationAssembly, trace);
 			_migrationLoader.CheckForDuplicatedVersion();
@@ -80,19 +61,6 @@ namespace Migrator
 		public List<long> AppliedMigrations
 		{
 			get { return _provider.AppliedMigrations; }
-		}
-
-		/// <summary>
-		/// Get or set the event logger.
-		/// </summary>
-		public ILogger Logger
-		{
-			get { return _logger; }
-			set
-			{
-				_logger = value;
-				_provider.Logger = value;
-			}
 		}
 
 		public virtual bool DryRun
@@ -132,7 +100,7 @@ namespace Migrator
 			bool firstRun = true;
 			BaseMigrate migrate = BaseMigrate.GetInstance(_migrationLoader.GetAvailableMigrations(), _provider, _logger);
 			migrate.DryRun = DryRun;
-			Logger.Started(migrate.AppliedVersions, version);
+			//Logger.Started(migrate.AppliedVersions, version);
 
 			while (migrate.Continue(version))
 			{
@@ -156,10 +124,10 @@ namespace Migrator
 				}
 				catch (Exception ex)
 				{
-					Logger.Exception(migrate.Current, migration.Name, ex);
+					//Logger.Exception(migrate.Current, migration.Name, ex);
 
 					// Oho! error! We rollback changes.
-					Logger.RollingBack(migrate.Previous);
+					//Logger.RollingBack(migrate.Previous);
 					_provider.Rollback();
 
 					throw;
@@ -168,7 +136,7 @@ namespace Migrator
 				migrate.Iterate();
 			}
 
-			Logger.Finished(migrate.AppliedVersions, version);
+			//Logger.Finished(migrate.AppliedVersions, version);
 		}
 	}
 }

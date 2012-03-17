@@ -85,13 +85,6 @@ namespace Migrator.Providers
 			return isReserved;
 		}
 
-		public abstract ITransformationProvider GetTransformationProvider(Dialect dialect, string connectionString);
-
-		public ITransformationProvider NewProviderForDialect(string connectionString)
-		{
-			return GetTransformationProvider(this, connectionString);
-		}
-
 		/// <summary>
 		/// Subclasses register a typename for the given type code and maximum
 		/// column length. <c>$l</c> in the type name will be replaced by the column

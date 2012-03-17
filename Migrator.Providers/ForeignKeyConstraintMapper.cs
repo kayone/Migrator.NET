@@ -4,17 +4,17 @@ namespace Migrator.Providers
 {
 	public class ForeignKeyConstraintMapper
 	{
-		public string SqlForConstraint(ForeignKeyConstraint constraint)
+		public string SqlForConstraint(ForeignKeyConstraintType constraintType)
 		{
-			switch (constraint)
+			switch (constraintType)
 			{
-				case ForeignKeyConstraint.Cascade:
+				case ForeignKeyConstraintType.Cascade:
 					return "CASCADE";
-				case ForeignKeyConstraint.Restrict:
+				case ForeignKeyConstraintType.Restrict:
 					return "RESTRICT";
-				case ForeignKeyConstraint.SetDefault:
+				case ForeignKeyConstraintType.SetDefault:
 					return "SET DEFAULT";
-				case ForeignKeyConstraint.SetNull:
+				case ForeignKeyConstraintType.SetNull:
 					return "SET NULL";
 				default:
 					return "NO ACTION";

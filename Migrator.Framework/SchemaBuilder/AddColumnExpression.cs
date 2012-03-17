@@ -33,7 +33,7 @@ namespace Migrator.Framework.SchemaBuilder
 				provider.AddForeignKey(
 					"FK_" + _toTable + "_" + _column.Name + "_" + _column.ForeignKey.PrimaryTable + "_" +
 					_column.ForeignKey.PrimaryKey,
-					_toTable, _column.Name, _column.ForeignKey.PrimaryTable, _column.ForeignKey.PrimaryKey, _column.Constraint);
+					_toTable, _column.Name, _column.ForeignKey.PrimaryTable, _column.ForeignKey.PrimaryKey, _column.ConstraintType);
 			}
 		}
 	}

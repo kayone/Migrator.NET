@@ -37,9 +37,5 @@ namespace Migrator.Providers.SQLite
 			get { return false; }
 		}
 
-		public override ITransformationProvider GetTransformationProvider(Dialect dialect, string connectionString)
-		{
-			return new SQLiteTransformationProvider(dialect, connectionString);
-		}
 	}
 }

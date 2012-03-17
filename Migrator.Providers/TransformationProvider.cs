@@ -17,68 +17,46 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using Migrator.Framework;
-using Migrator.Framework.Loggers;
+using Migrator.Framework.Exceptions;
 using Migrator.Framework.SchemaBuilder;
-using ForeignKeyConstraint = Migrator.Framework.ForeignKeyConstraint;
+using NLog;
 
 namespace Migrator.Providers
 {
     /// <summary>
     /// Base class for every transformation providers.
-    /// A 'tranformation' is an operation that modifies the database.
+    /// A 'transformation' is an operation that modifies the database.
     /// </summary>
     public abstract class TransformationProvider : ITransformationProvider
     {
         protected readonly string _connectionString;
 
-        readonly ForeignKeyConstraintMapper constraintMapper = new ForeignKeyConstraintMapper();
+        readonly ForeignKeyConstraintMapper _constraintMapper = new ForeignKeyConstraintMapper();
         List<long> _appliedMigrations;
-        protected IDbConnection _connection;
-        protected Dialect _dialect;
-        ILogger _logger;
+        public IDbConnection Connection { get; set; }
+
+
         IDbTransaction _transaction;
 
-        protected TransformationProvider(Dialect dialect, string connectionString)
+        public TransformationProvider(string connectionString)
         {
-            _dialect = dialect;
+
             _connectionString = connectionString;
-            _logger = new Logger(false);
+            Logger = LogManager.GetCurrentClassLogger();
         }
 
-        public Dialect Dialect
-        {
-            get { return _dialect; }
-        }
+        protected abstract Dialect Dialect { get; }
 
-        public string ConnectionString { get { return _connectionString; }}
 
-        /// <summary>
-        /// Returns the event logger
-        /// </summary>
-        public virtual ILogger Logger
-        {
-            get { return _logger; }
-            set { _logger = value; }
-        }
+        public string ConnectionString { get { return _connectionString; } }
 
-        public virtual ITransformationProvider this[string provider]
-        {
-            get
-            {
-                if (null != provider && IsThisProvider(provider))
-                    return this;
+        public Logger Logger { get; private set; }
 
-                return NoOpTransformationProvider.Instance;
-            }
-        }
 
         public virtual Column[] GetColumns(string table)
         {
             var columns = new List<Column>();
-            using (
-                IDataReader reader =
-                    ExecuteQuery(
-                        String.Format("select COLUMN_NAME, IS_NULLABLE from INFORMATION_SCHEMA.COLUMNS where table_name = '{0}'", table)))
+            using (IDataReader reader = ExecuteQuery("select COLUMN_NAME, IS_NULLABLE from INFORMATION_SCHEMA.COLUMNS where table_name = '{0}'", table))
             {
                 while (reader.Read())
                 {
@@ -121,57 +99,24 @@ namespace Migrator.Providers
         {
             if (TableExists(table) && ConstraintExists(table, name))
             {
-                table = _dialect.TableNameNeedsQuote ? _dialect.Quote(table) : table;
-                name = _dialect.ConstraintNameNeedsQuote ? _dialect.Quote(name) : name;
-                ExecuteNonQuery(String.Format("ALTER TABLE {0} DROP CONSTRAINT {1}", table, name));
+                table = Dialect.TableNameNeedsQuote ? Dialect.Quote(table) : table;
+                name = Dialect.ConstraintNameNeedsQuote ? Dialect.Quote(name) : name;
+                ExecuteNonQuery("ALTER TABLE {0} DROP CONSTRAINT {1}", table, name);
             }
         }
 
-        /// <summary>
-        /// Add a new table
-        /// </summary>
-        /// <param name="name">Table name</param>
-        /// <param name="columns">Columns</param>
-        /// <example>
-        /// Adds the Test table with two columns:
-        /// <code>
-        /// Database.AddTable("Test",
-        ///	                  new Column("Id", typeof(int), ColumnProperty.PrimaryKey),
-        ///	                  new Column("Title", typeof(string), 100)
-        ///	                 );
-        /// </code>
-        /// </example>
+
         public virtual void AddTable(string name, params Column[] columns)
         {
-            // Most databases don't have the concept of a storage engine, so default is to not use it.
             AddTable(name, null, columns);
         }
 
-        /// <summary>
-        /// Add a new table
-        /// </summary>
-        /// <param name="name">Table name</param>
-        /// <param name="columns">Columns</param>
-        /// <param name="engine">the database storage engine to use</param>
-        /// <example>
-        /// Adds the Test table with two columns:
-        /// <code>
-        /// Database.AddTable("Test", "INNODB",
-        ///	                  new Column("Id", typeof(int), ColumnProperty.PrimaryKey),
-        ///	                  new Column("Title", typeof(string), 100)
-        ///	                 );
-        /// </code>
-        /// </example>
         public virtual void AddTable(string name, string engine, params Column[] columns)
         {
-            if (TableExists(name))
-            {
-                Logger.Warn("Table {0} already exists", name);
-                return;
-            }
+            if (TableExists(name)) throw new TableAlreadyExistsException(name);
 
-            List<string> pks = GetPrimaryKeys(columns);
-            bool compoundPrimaryKey = pks.Count > 1;
+            var primaryKeys = GetPrimaryKeys(columns).ToList();
+            bool compoundPrimaryKey = primaryKeys.Count() > 1;
 
             var columnProviders = new List<ColumnPropertiesMapper>(columns.Length);
             foreach (Column column in columns)
@@ -183,7 +128,7 @@ namespace Migrator.Providers
                     column.ColumnProperty = column.ColumnProperty | ColumnProperty.NotNull; // PK is always not-null
                 }
 
-                ColumnPropertiesMapper mapper = _dialect.GetAndMapColumnProperties(column);
+                ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(column);
                 columnProviders.Add(mapper);
             }
 
@@ -192,32 +137,42 @@ namespace Migrator.Providers
 
             if (compoundPrimaryKey)
             {
-                AddPrimaryKey(String.Format("PK_{0}", name), name, pks.ToArray());
+                AddPrimaryKey(String.Format("PK_{0}", name), name, primaryKeys.Select(c => c.Name).ToArray());
             }
         }
 
-        public virtual void RemoveTable(string name)
+        public virtual void DeleteTable(string name)
         {
             if (TableExists(name))
-                ExecuteNonQuery(String.Format("DROP TABLE {0}", name));
+                ExecuteNonQuery("DROP TABLE {0}", name);
         }
 
         public virtual void RenameTable(string oldName, string newName)
         {
             if (TableExists(newName))
-                throw new MigrationException(String.Format("Table with name '{0}' already exists", newName));
+                throw new TableAlreadyExistsException(newName);
+
+            if (!TableExists(oldName))
+                throw new TableDoesntExistsException(oldName);
 
             if (TableExists(oldName))
                 ExecuteNonQuery(String.Format("ALTER TABLE {0} RENAME TO {1}", oldName, newName));
         }
 
-        public virtual void RenameColumn(string tableName, string oldColumnName, string newColumnName)
+        public void RenameColumn(string tableName, string oldColumnName, string newColumnName)
         {
             if (ColumnExists(tableName, newColumnName))
-                throw new MigrationException(String.Format("Table '{0}' has column named '{1}' already", tableName, newColumnName));
+                throw new ColumnAlreadyExistsException(tableName, newColumnName);
 
-            if (ColumnExists(tableName, oldColumnName))
-                ExecuteNonQuery(String.Format("ALTER TABLE {0} RENAME COLUMN {1} TO {2}", tableName, oldColumnName, newColumnName));
+            if (!ColumnExists(tableName, oldColumnName))
+                throw new ColumnDoesntExistsException(tableName, newColumnName);
+
+            DoRenameColumn(tableName, oldColumnName, newColumnName);
+        }
+
+        protected virtual void DoRenameColumn(string tableName, string oldColumnName, string newColumnName)
+        {
+            ExecuteNonQuery("ALTER TABLE {0} RENAME COLUMN {1} TO {2}", tableName, oldColumnName, newColumnName);
         }
 
         public virtual void RemoveColumn(string table, string column)
@@ -231,15 +186,7 @@ namespace Migrator.Providers
 
         public virtual bool ColumnExists(string table, string column)
         {
-            try
-            {
-                ExecuteNonQuery(String.Format("SELECT {0} FROM {1}", column, table));
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            return GetColumns(table).Any(c => string.Equals(c.Name, column, StringComparison.CurrentCultureIgnoreCase));
         }
 
         public virtual void ChangeColumn(string table, Column column)
@@ -250,22 +197,14 @@ namespace Migrator.Providers
                 return;
             }
 
-            ColumnPropertiesMapper mapper = _dialect.GetAndMapColumnProperties(column);
+            ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(column);
 
             ChangeColumn(table, mapper.ColumnSql);
         }
 
-        public virtual bool TableExists(string table)
+        public bool TableExists(string table)
         {
-            try
-            {
-                ExecuteNonQuery("SELECT COUNT(*) FROM " + table);
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            return GetTables().Any(c => String.Equals(c, table, StringComparison.CurrentCultureIgnoreCase));
         }
 
         public virtual bool IndexExists(string indexName, string tableName)
@@ -275,7 +214,7 @@ namespace Migrator.Providers
                 var count = (int)ExecuteScalar(String.Format("SELECT COUNT(*) FROM INFORMATION_SCHEMA.Indexes WHERE Index_Name = '{0}' AND Table_Name = '{1}'  ", indexName, tableName));
                 return count == 1;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }
@@ -292,15 +231,18 @@ namespace Migrator.Providers
             ExecuteNonQuery(String.Format("CREATE INDEX {0} ON {1} ({2}) ", name, table, string.Join(", ", columns)));
         }
 
-        /// <summary>
-        /// Add a new column to an existing table.
-        /// </summary>
-        /// <param name="table">Table to which to add the column</param>
-        /// <param name="column">Column name</param>
-        /// <param name="type">Date type of the column</param>
-        /// <param name="size">Max length of the column</param>
-        /// <param name="property">Properties of the column, see <see cref="ColumnProperty">ColumnProperty</see>,</param>
-        /// <param name="defaultValue">Default value</param>
+        public virtual void WipeDatabase(string databaseName)
+        {
+            Connection.ChangeDatabase(databaseName);
+
+            var tables = GetTables();
+
+            foreach (var table in tables)
+            {
+                DeleteTable(table);
+            }
+        }
+
         public virtual void AddColumn(string table, string column, DbType type, int size, ColumnProperty property,
                                       object defaultValue)
         {
@@ -311,26 +253,17 @@ namespace Migrator.Providers
             }
 
             ColumnPropertiesMapper mapper =
-                _dialect.GetAndMapColumnProperties(new Column(column, type, size, property, defaultValue));
+                Dialect.GetAndMapColumnProperties(new Column(column, type, size, property, defaultValue));
 
             AddColumn(table, mapper.ColumnSql);
         }
 
-        /// <summary>
-        /// <see cref="TransformationProvider.AddColumn(string, string, DbType, int, ColumnProperty, object)">
-        /// AddColumn(string, string, Type, int, ColumnProperty, object)
-        /// </see>
-        /// </summary>
+
         public virtual void AddColumn(string table, string column, DbType type)
         {
             AddColumn(table, column, type, 0, ColumnProperty.Null, null);
         }
 
-        /// <summary>
-        /// <see cref="TransformationProvider.AddColumn(string, string, DbType, int, ColumnProperty, object)">
-        /// AddColumn(string, string, Type, int, ColumnProperty, object)
-        /// </see>
-        /// </summary>
         public virtual void AddColumn(string table, string column, DbType type, int size)
         {
             AddColumn(table, column, type, size, ColumnProperty.Null, null);
@@ -344,38 +277,21 @@ namespace Migrator.Providers
                 return;
             }
 
-            ColumnPropertiesMapper mapper =
-                _dialect.GetAndMapColumnProperties(new Column(column, type, defaultValue));
+            ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(new Column(column, type, defaultValue));
 
             AddColumn(table, mapper.ColumnSql);
         }
 
-        /// <summary>
-        /// <see cref="TransformationProvider.AddColumn(string, string, DbType, int, ColumnProperty, object)">
-        /// AddColumn(string, string, Type, int, ColumnProperty, object)
-        /// </see>
-        /// </summary>
         public virtual void AddColumn(string table, string column, DbType type, ColumnProperty property)
         {
             AddColumn(table, column, type, 0, property, null);
         }
 
-        /// <summary>
-        /// <see cref="TransformationProvider.AddColumn(string, string, DbType, int, ColumnProperty, object)">
-        /// AddColumn(string, string, Type, int, ColumnProperty, object)
-        /// </see>
-        /// </summary>
         public virtual void AddColumn(string table, string column, DbType type, int size, ColumnProperty property)
         {
             AddColumn(table, column, type, size, property, null);
         }
 
-        /// <summary>
-        /// Append a primary key to a table.
-        /// </summary>
-        /// <param name="name">Constraint name</param>
-        /// <param name="table">Table name</param>
-        /// <param name="columns">Primary column names</param>
         public virtual void AddPrimaryKey(string name, string table, params string[] columns)
         {
             if (ConstraintExists(table, name))
@@ -416,41 +332,29 @@ namespace Migrator.Providers
             ExecuteNonQuery(String.Format("ALTER TABLE {0} ADD CONSTRAINT {1} CHECK ({2}) ", table, name, checkSql));
         }
 
-        /// <summary>
-        /// Guesses the name of the foreign key and add it
-        /// </summary>
         public virtual void GenerateForeignKey(string primaryTable, string primaryColumn, string refTable, string refColumn)
         {
             AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumn, refTable, refColumn);
         }
 
-        /// <summary>
-        /// Guesses the name of the foreign key and add it
-        /// </summary>
         public virtual void GenerateForeignKey(string primaryTable, string[] primaryColumns, string refTable,
                                                string[] refColumns)
         {
             AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumns, refTable, refColumns);
         }
 
-        /// <summary>
-        /// Guesses the name of the foreign key and add it
-        /// </summary>
         public virtual void GenerateForeignKey(string primaryTable, string primaryColumn, string refTable,
-                                               string refColumn, ForeignKeyConstraint constraint)
+                                               string refColumn, ForeignKeyConstraintType constraintType)
         {
             AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumn, refTable, refColumn,
-                          constraint);
+                          constraintType);
         }
 
-        /// <summary>
-        /// Guesses the name of the foreign key and add it
-        /// </summary>
         public virtual void GenerateForeignKey(string primaryTable, string[] primaryColumns, string refTable,
-                                               string[] refColumns, ForeignKeyConstraint constraint)
+                                               string[] refColumns, ForeignKeyConstraintType constraintType)
         {
             AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumns, refTable, refColumns,
-                          constraint);
+                          constraintType);
         }
 
         /// <summary>
@@ -482,17 +386,17 @@ namespace Migrator.Providers
         /// </summary>
         public virtual void AddForeignKey(string name, string primaryTable, string[] primaryColumns, string refTable, string[] refColumns)
         {
-            AddForeignKey(name, primaryTable, primaryColumns, refTable, refColumns, ForeignKeyConstraint.NoAction);
+            AddForeignKey(name, primaryTable, primaryColumns, refTable, refColumns, ForeignKeyConstraintType.NoAction);
         }
 
-        public virtual void AddForeignKey(string name, string primaryTable, string primaryColumn, string refTable, string refColumn, ForeignKeyConstraint constraint)
+        public virtual void AddForeignKey(string name, string primaryTable, string primaryColumn, string refTable, string refColumn, ForeignKeyConstraintType constraintType)
         {
             AddForeignKey(name, primaryTable, new[] { primaryColumn }, refTable, new[] { refColumn },
-                          constraint);
+                          constraintType);
         }
 
         public virtual void AddForeignKey(string name, string primaryTable, string[] primaryColumns, string refTable,
-                                          string[] refColumns, ForeignKeyConstraint constraint)
+                                          string[] refColumns, ForeignKeyConstraintType constraintType)
         {
             if (ConstraintExists(primaryTable, name))
             {
@@ -505,7 +409,7 @@ namespace Migrator.Providers
             QuoteColumnNames(primaryColumns);
             QuoteColumnNames(refColumns);
 
-            string constraintResolved = constraintMapper.SqlForConstraint(constraint);
+            string constraintResolved = _constraintMapper.SqlForConstraint(constraintType);
 
             ExecuteNonQuery(
                 String.Format(
@@ -527,10 +431,12 @@ namespace Migrator.Providers
             return ConstraintExists(table, name);
         }
 
-        public virtual int ExecuteNonQuery(string sql)
+        public virtual int ExecuteNonQuery(string sql, params object[] args)
         {
+            sql = string.Format(sql, args);
+
             Logger.Trace(sql);
-            Logger.ApplyingDBChange(sql);
+
             using (IDbCommand cmd = BuildCommand(sql))
             {
                 try
@@ -549,9 +455,12 @@ namespace Migrator.Providers
         /// Execute an SQL query returning results.
         /// </summary>
         /// <param name="sql">The SQL command.</param>
+        /// <param name="args"> </param>
         /// <returns>A data iterator, <see cref="System.Data.IDataReader">IDataReader</see>.</returns>
-        public virtual IDataReader ExecuteQuery(string sql)
+        public virtual IDataReader ExecuteQuery(string sql, params object[] args)
         {
+            sql = string.Format(sql, args);
+
             Logger.Trace(sql);
             using (IDbCommand cmd = BuildCommand(sql))
             {
@@ -567,8 +476,10 @@ namespace Migrator.Providers
             }
         }
 
-        public virtual object ExecuteScalar(string sql)
+        public virtual object ExecuteScalar(string sql, params object[] args)
         {
+            sql = string.Format(sql, args);
+
             Logger.Trace(sql);
             using (IDbCommand cmd = BuildCommand(sql))
             {
@@ -591,7 +502,7 @@ namespace Migrator.Providers
 
         public virtual IDataReader Select(string what, string from, string where)
         {
-            return ExecuteQuery(String.Format("SELECT {0} FROM {1} WHERE {2}", what, from, where));
+            return ExecuteQuery("SELECT {0} FROM {1} WHERE {2}", what, from, where);
         }
 
         public object SelectScalar(string what, string from)
@@ -601,7 +512,7 @@ namespace Migrator.Providers
 
         public virtual object SelectScalar(string what, string from, string where)
         {
-            return ExecuteScalar(String.Format("SELECT {0} FROM {1} WHERE {2}", what, from, where));
+            return ExecuteScalar("SELECT {0} FROM {1} WHERE {2}", what, from, where);
         }
 
         public virtual int Update(string table, string[] columns, string[] values)
@@ -622,7 +533,7 @@ namespace Migrator.Providers
             return ExecuteNonQuery(String.Format(query, table, namesAndValues));
         }
 
-        public virtual int Insert(string table, string[] columns, object[] values)
+        public virtual int Insert(string table, string[] columns, string[] values)
         {
             if (string.IsNullOrEmpty(table)) throw new ArgumentNullException("table");
             if (columns == null) throw new ArgumentNullException("columns");
@@ -631,7 +542,7 @@ namespace Migrator.Providers
 
             table = QuoteTableNameIfRequired(table);
 
-            string columnNames = string.Join(", ", columns.Select(col => QuoteColumnNameIfRequired(col)).ToArray());
+            string columnNames = string.Join(", ", columns.Select(QuoteColumnNameIfRequired).ToArray());
 
             var builder = new StringBuilder();
 
@@ -643,17 +554,22 @@ namespace Migrator.Providers
 
             string parameterNames = builder.ToString();
 
-            using (IDbCommand command = _connection.CreateCommand())
+            using (IDbCommand command = Connection.CreateCommand())
             {
                 EnsureHasConnection();
+
+
                 command.Transaction = _transaction;
 
                 command.CommandText = String.Format("INSERT INTO {0} ({1}) VALUES ({2})", table, columnNames, parameterNames);
                 command.CommandType = CommandType.Text;
 
+
+                Logger.Trace(command.CommandText);
+
                 int paramCount = 0;
 
-                foreach (object value in values)
+                foreach (string value in values)
                 {
                     IDbDataParameter parameter = command.CreateParameter();
 
@@ -670,23 +586,20 @@ namespace Migrator.Providers
             }
         }
 
-        public virtual int Delete(string table, string[] columns, string[] values)
+        public virtual int DeleteData(string table, string[] columns, string[] values)
         {
             if (null == columns || null == values)
             {
                 return ExecuteNonQuery(String.Format("DELETE FROM {0}", table));
             }
-            else
-            {
-                return ExecuteNonQuery(String.Format("DELETE FROM {0} WHERE ({1})", table, JoinColumnsAndValues(columns, values)));
-            }
+            return ExecuteNonQuery(String.Format("DELETE FROM {0} WHERE ({1})", table, JoinColumnsAndValues(columns, values)));
         }
 
-        public virtual int Delete(string table, string wherecolumn, string wherevalue)
+        public virtual int DeleteData(string table, string wherecolumn, string wherevalue)
         {
             if (string.IsNullOrEmpty(wherecolumn) && string.IsNullOrEmpty(wherevalue))
             {
-                return Delete(table, (string[])null, null);
+                return DeleteData(table, (string[])null, null);
             }
 
             return ExecuteNonQuery(String.Format("DELETE FROM {0} WHERE {1} = {2}", table, wherecolumn, QuoteValues(wherevalue)));
@@ -697,10 +610,10 @@ namespace Migrator.Providers
         /// </summary>
         public virtual void BeginTransaction()
         {
-            if (_transaction == null && _connection != null)
+            if (_transaction == null && Connection != null)
             {
                 EnsureHasConnection();
-                _transaction = _connection.BeginTransaction(IsolationLevel.ReadCommitted);
+                _transaction = Connection.BeginTransaction(IsolationLevel.ReadCommitted);
             }
         }
 
@@ -709,7 +622,7 @@ namespace Migrator.Providers
         /// </summary>
         public virtual void Rollback()
         {
-            if (_transaction != null && _connection != null && _connection.State == ConnectionState.Open)
+            if (_transaction != null && Connection != null && Connection.State == ConnectionState.Open)
             {
                 try
                 {
@@ -717,7 +630,7 @@ namespace Migrator.Providers
                 }
                 finally
                 {
-                    _connection.Close();
+                    Connection.Close();
                 }
             }
             _transaction = null;
@@ -728,7 +641,7 @@ namespace Migrator.Providers
         /// </summary>
         public virtual void Commit()
         {
-            if (_transaction != null && _connection != null && _connection.State == ConnectionState.Open)
+            if (_transaction != null && Connection != null && Connection.State == ConnectionState.Open)
             {
                 try
                 {
@@ -736,7 +649,7 @@ namespace Migrator.Providers
                 }
                 finally
                 {
-                    _connection.Close();
+                    Connection.Close();
                 }
             }
             _transaction = null;
@@ -784,7 +697,7 @@ namespace Migrator.Providers
         public void MigrationApplied(long version)
         {
             CreateSchemaInfoTable();
-            Insert("SchemaInfo", new string[] { "Version" }, new object[] { version });
+            Insert("SchemaInfo", new string[] { "Version" }, new[] { version.ToString() });
             _appliedMigrations.Add(version);
         }
 
@@ -795,7 +708,7 @@ namespace Migrator.Providers
         public void MigrationUnApplied(long version)
         {
             CreateSchemaInfoTable();
-            Delete("SchemaInfo", "Version", version.ToString());
+            DeleteData("SchemaInfo", "Version", version.ToString());
             _appliedMigrations.Remove(version);
         }
 
@@ -806,12 +719,12 @@ namespace Migrator.Providers
 
         public virtual void GenerateForeignKey(string primaryTable, string refTable)
         {
-            GenerateForeignKey(primaryTable, refTable, ForeignKeyConstraint.NoAction);
+            GenerateForeignKey(primaryTable, refTable, ForeignKeyConstraintType.NoAction);
         }
 
-        public virtual void GenerateForeignKey(string primaryTable, string refTable, ForeignKeyConstraint constraint)
+        public virtual void GenerateForeignKey(string primaryTable, string refTable, ForeignKeyConstraintType constraintType)
         {
-            GenerateForeignKey(primaryTable, refTable + "Id", refTable, "Id", constraint);
+            GenerateForeignKey(primaryTable, refTable + "Id", refTable, "Id", constraintType);
         }
 
         public virtual IDbCommand GetCommand()
@@ -827,9 +740,10 @@ namespace Migrator.Providers
 
         public void Dispose()
         {
-            if (_connection != null && _connection.State == ConnectionState.Open)
+            if (Connection != null && Connection.State != ConnectionState.Closed)
             {
-                _connection.Close();
+                Connection.Close();
+                Connection.Dispose();
             }
         }
 
@@ -868,100 +782,80 @@ namespace Migrator.Providers
             return quotedColumns;
         }
 
-        public virtual bool IsThisProvider(string provider)
+        protected virtual void AddTable(string table, string engine, string columns)
         {
-            // XXX: This might need to be more sophisticated. Currently just a convention
-            return GetType().Name.ToLower().StartsWith(provider.ToLower());
-        }
-
-        public virtual void AddTable(string table, string engine, string columns)
-        {
-            table = _dialect.TableNameNeedsQuote ? _dialect.Quote(table) : table;
+            table = Dialect.TableNameNeedsQuote ? Dialect.Quote(table) : table;
             string sqlCreate = String.Format("CREATE TABLE {0} ({1})", table, columns);
             ExecuteNonQuery(sqlCreate);
         }
 
-        public virtual List<string> GetPrimaryKeys(IEnumerable<Column> columns)
+        private IEnumerable<Column> GetPrimaryKeys(IEnumerable<Column> columns)
         {
-            var pks = new List<string>();
-            foreach (Column col in columns)
-            {
-                if (col.IsPrimaryKey)
-                    pks.Add(col.Name);
-            }
-            return pks;
+            return columns.Where(c => c.IsPrimaryKey);
         }
 
-        public virtual void AddColumn(string table, string sqlColumn)
+        protected virtual void AddColumn(string table, string sqlColumn)
         {
             table = QuoteTableNameIfRequired(table);
             ExecuteNonQuery(String.Format("ALTER TABLE {0} ADD COLUMN {1}", table, sqlColumn));
         }
 
-        public virtual void ChangeColumn(string table, string sqlColumn)
+        protected virtual void ChangeColumn(string table, string sqlColumn)
         {
             table = QuoteTableNameIfRequired(table);
             ExecuteNonQuery(String.Format("ALTER TABLE {0} ALTER COLUMN {1}", table, sqlColumn));
         }
 
-        protected virtual string JoinColumnsAndIndexes(IEnumerable<ColumnPropertiesMapper> columns)
+        private string JoinColumnsAndIndexes(IEnumerable<ColumnPropertiesMapper> columns)
         {
             string indexes = JoinIndexes(columns);
             string columnsAndIndexes = JoinColumns(columns) + (indexes != null ? "," + indexes : String.Empty);
             return columnsAndIndexes;
         }
 
-        protected virtual string JoinIndexes(IEnumerable<ColumnPropertiesMapper> columns)
+        private string JoinIndexes(IEnumerable<ColumnPropertiesMapper> columns)
         {
-            var indexes = new List<string>();
-            foreach (ColumnPropertiesMapper column in columns)
-            {
-                string indexSql = column.IndexSql;
-                if (indexSql != null)
-                    indexes.Add(indexSql);
-            }
+            var indexes = columns.Select(column => column.IndexSql).Where(indexSql => indexSql != null).ToList();
 
-            if (indexes.Count == 0)
+            if (!indexes.Any())
                 return null;
 
-            return String.Join(", ", indexes.ToArray());
+            return String.Join(", ", indexes);
         }
 
-        protected virtual string JoinColumns(IEnumerable<ColumnPropertiesMapper> columns)
+        private static string JoinColumns(IEnumerable<ColumnPropertiesMapper> columns)
         {
-            var columnStrings = new List<string>();
-            foreach (ColumnPropertiesMapper column in columns)
-                columnStrings.Add(column.ColumnSql);
-            return String.Join(", ", columnStrings.ToArray());
+            return String.Join(", ", columns.Select(column => column.ColumnSql));
         }
 
         IDbCommand BuildCommand(string sql)
         {
             EnsureHasConnection();
-            IDbCommand cmd = _connection.CreateCommand();
+            IDbCommand cmd = Connection.CreateCommand();
             cmd.CommandText = sql;
             cmd.CommandType = CommandType.Text;
             if (_transaction != null)
             {
                 cmd.Transaction = _transaction;
             }
+
             return cmd;
         }
 
-        public virtual int Delete(string table)
+        public int DeleteData(string table)
         {
-            return Delete(table, null, (string[])null);
+            return DeleteData(table, null, (string[])null);
         }
 
-        protected void EnsureHasConnection()
+        private void EnsureHasConnection()
         {
-            if (_connection.State != ConnectionState.Open)
+            if (Connection.State != ConnectionState.Open)
             {
-                _connection.Open();
+                Connection.Open();
             }
         }
 
-        protected void CreateSchemaInfoTable()
+        private void CreateSchemaInfoTable()
         {
             EnsureHasConnection();
             if (!TableExists("SchemaInfo"))
@@ -970,12 +864,12 @@ namespace Migrator.Providers
             }
         }
 
-        public virtual string QuoteValues(string values)
+        private string QuoteValues(string values)
         {
             return QuoteValues(new[] { values })[0];
         }
 
-        public virtual string[] QuoteValues(string[] values)
+        private string[] QuoteValues(string[] values)
         {
             return Array.ConvertAll(values,
                                     delegate(string val)
@@ -987,7 +881,7 @@ namespace Migrator.Providers
                                     });
         }
 
-        public virtual string JoinColumnsAndValues(string[] columns, string[] values)
+        private string JoinColumnsAndValues(string[] columns, string[] values)
         {
             string[] quotedValues = QuoteValues(values);
             var namesAndValues = new string[columns.Length];
@@ -999,12 +893,12 @@ namespace Migrator.Providers
             return String.Join(", ", namesAndValues);
         }
 
-        protected virtual string GenerateParameterName(int index)
+        private string GenerateParameterName(int index)
         {
             return "@p" + index;
         }
 
-        protected virtual void ConfigureParameterWithValue(IDbDataParameter parameter, int index, object value)
+        private void ConfigureParameterWithValue(IDbDataParameter parameter, int index, object value)
         {
             if (value == null || value == DBNull.Value)
             {
@@ -1030,12 +924,12 @@ namespace Migrator.Providers
                 parameter.DbType = DbType.String;
                 parameter.Value = value;
             }
-            else if (value is DateTime || value is DateTime?)
+            else if (value is DateTime)
             {
                 parameter.DbType = DbType.DateTime;
                 parameter.Value = value;
             }
-            else if (value is Boolean || value is Boolean?)
+            else if (value is Boolean)
             {
                 parameter.DbType = DbType.Boolean;
                 parameter.Value = value;
@@ -1044,13 +938,6 @@ namespace Migrator.Providers
             {
                 throw new NotSupportedException(string.Format("TransformationProvider does not support value: {0} of type: {1}", value, value.GetType()));
             }
-        }
-
-        string FormatValue(object value)
-        {
-            if (value == null) return null;
-            if (value is DateTime) return ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss:fff");
-            return value.ToString();
         }
 
         void QuoteColumnNames(string[] primaryColumns)

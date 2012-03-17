@@ -2,7 +2,6 @@
 using Migrator.Framework;
 using NUnit.Framework;
 using Rhino.Mocks;
-using ForeignKeyConstraint = Migrator.Framework.ForeignKeyConstraint;
 
 namespace Migrator.Tests
 {
@@ -56,13 +55,13 @@ namespace Migrator.Tests
 		{
 			provider.AddManyToManyJoiningTable("dbo", "TestScenarios", "Id", "Versions", "Id");
 
-			object[] args = provider.GetArgumentsForCallsMadeOn(stub => stub.AddForeignKey(null, null, "", null, null, ForeignKeyConstraint.NoAction))[0];
+			object[] args = provider.GetArgumentsForCallsMadeOn(stub => stub.AddForeignKey(null, null, "", null, null, ForeignKeyConstraintType.NoAction))[0];
 
 			Assert.AreEqual("dbo.TestScenarioVersions", args[1]);
 			Assert.AreEqual("TestScenarioId", args[2]);
 			Assert.AreEqual("dbo.TestScenarios", args[3]);
 			Assert.AreEqual("Id", args[4]);
-			Assert.AreEqual(ForeignKeyConstraint.NoAction, args[5]);
+			Assert.AreEqual(ForeignKeyConstraintType.NoAction, args[5]);
 		}
 
 		[Test]
@@ -70,7 +69,7 @@ namespace Migrator.Tests
 		{
 			provider.AddManyToManyJoiningTable("dbo", "TestScenarios", "Id", "Versions", "Id");
 
-			object[] args = provider.GetArgumentsForCallsMadeOn(stub => stub.AddForeignKey(null, null, "", null, null, ForeignKeyConstraint.NoAction))[0];
+			object[] args = provider.GetArgumentsForCallsMadeOn(stub => stub.AddForeignKey(null, null, "", null, null, ForeignKeyConstraintType.NoAction))[0];
 
 			Assert.AreEqual("FK_Scenarios_ScenarioVersions", args[0]);
 		}
@@ -94,13 +93,13 @@ namespace Migrator.Tests
 		{
 			provider.AddManyToManyJoiningTable("dbo", "TestScenarios", "Id", "Versions", "Id");
 
-			object[] args = provider.GetArgumentsForCallsMadeOn(stub => stub.AddForeignKey(null, null, "", null, null, ForeignKeyConstraint.NoAction))[1];
+			object[] args = provider.GetArgumentsForCallsMadeOn(stub => stub.AddForeignKey(null, null, "", null, null, ForeignKeyConstraintType.NoAction))[1];
 
 			Assert.AreEqual("dbo.TestScenarioVersions", args[1]);
 			Assert.AreEqual("VersionId", args[2]);
 			Assert.AreEqual("dbo.Versions", args[3]);
 			Assert.AreEqual("Id", args[4]);
-			Assert.AreEqual(ForeignKeyConstraint.NoAction, args[5]);
+			Assert.AreEqual(ForeignKeyConstraintType.NoAction, args[5]);
 		}
 
 		[Test]
@@ -108,7 +107,7 @@ namespace Migrator.Tests
 		{
 			provider.AddManyToManyJoiningTable("dbo", "TestScenarios", "Id", "Versions", "Id");
 
-			object[] args = provider.GetArgumentsForCallsMadeOn(stub => stub.AddForeignKey(null, null, "", null, null, ForeignKeyConstraint.NoAction))[1];
+			object[] args = provider.GetArgumentsForCallsMadeOn(stub => stub.AddForeignKey(null, null, "", null, null, ForeignKeyConstraintType.NoAction))[1];
 
 			Assert.AreEqual("FK_Versions_ScenarioVersions", args[0]);
 		}
@@ -150,7 +149,7 @@ namespace Migrator.Tests
 		{
 			provider.RemoveManyToManyJoiningTable("dbo", "TestScenarios", "Versions");
 
-			object[] args = provider.GetArgumentsForCallsMadeOn(stub => stub.RemoveTable(null))[0];
+			object[] args = provider.GetArgumentsForCallsMadeOn(stub => stub.DeleteTable(null))[0];
 
 			Assert.AreEqual("dbo.TestScenarioVersions", args[0]);
 		}

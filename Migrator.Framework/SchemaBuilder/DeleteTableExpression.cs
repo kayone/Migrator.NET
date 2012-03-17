@@ -24,7 +24,7 @@ namespace Migrator.Framework.SchemaBuilder
 
 		public void Create(ITransformationProvider provider)
 		{
-			provider.RemoveTable(_tableName);
+			provider.DeleteTable(_tableName);
 		}
 	}
 }

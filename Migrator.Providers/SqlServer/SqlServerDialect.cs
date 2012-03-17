@@ -12,10 +12,10 @@ namespace Migrator.Providers.SqlServer
 			RegisterColumnType(DbType.AnsiStringFixedLength, 8000, "CHAR($l)");
 			RegisterColumnType(DbType.AnsiString, "VARCHAR(255)");
 			RegisterColumnType(DbType.AnsiString, 8000, "VARCHAR($l)");
-			RegisterColumnType(DbType.AnsiString, 2147483647, "TEXT");
+            RegisterColumnType(DbType.AnsiString, 2147483647, "VARCHAR(MAX)");
 			RegisterColumnType(DbType.Binary, "VARBINARY(8000)");
 			RegisterColumnType(DbType.Binary, 8000, "VARBINARY($l)");
-			RegisterColumnType(DbType.Binary, 2147483647, "IMAGE");
+            RegisterColumnType(DbType.Binary, 2147483647, "VARBINARY(MAX)");
 			RegisterColumnType(DbType.Boolean, "BIT");
 			RegisterColumnType(DbType.Byte, "TINYINT");
 			RegisterColumnType(DbType.Currency, "MONEY");
@@ -33,8 +33,10 @@ namespace Migrator.Providers.SqlServer
 			RegisterColumnType(DbType.StringFixedLength, 4000, "NCHAR($l)");
 			RegisterColumnType(DbType.String, "NVARCHAR(255)");
 			RegisterColumnType(DbType.String, 4000, "NVARCHAR($l)");
-			RegisterColumnType(DbType.String, 1073741823, "NTEXT");
+            RegisterColumnType(DbType.String, 1073741823, "NVARCHAR(MAX)");
 			RegisterColumnType(DbType.Time, "DATETIME");
+            
+            RegisterColumnType(DbType.Xml, "XML");
 
 			RegisterProperty(ColumnProperty.Identity, "IDENTITY");
 		}
@@ -59,11 +61,6 @@ namespace Migrator.Providers.SqlServer
 			get { return "[{0}]"; }
 		}
 
-		public override ITransformationProvider GetTransformationProvider(Dialect dialect, string connectionString)
-		{
-			return new SqlServerTransformationProvider(dialect, connectionString);
-		}
-
 		public override string Quote(string value)
 		{
 			int firstDotIndex = value.IndexOf('.');
@@ -78,7 +75,7 @@ namespace Migrator.Providers.SqlServer
 
 		public override string Default(object defaultValue)
 		{
-			if (defaultValue.GetType().Equals(typeof (bool)))
+			if (defaultValue is bool)
 			{
 				defaultValue = ((bool) defaultValue) ? 1 : 0;
 			}

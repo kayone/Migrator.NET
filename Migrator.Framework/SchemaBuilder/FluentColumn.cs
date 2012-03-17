@@ -64,7 +64,7 @@ namespace Migrator.Framework.SchemaBuilder
 			set { _inner.DefaultValue = value; }
 		}
 
-		public ForeignKeyConstraint Constraint { get; set; }
+		public ForeignKeyConstraintType ConstraintType { get; set; }
 
 		public ForeignKey ForeignKey { get; set; }
 	}

@@ -15,7 +15,7 @@ namespace Migrator.Framework.SchemaBuilder
 {
 	public interface IFluentColumn : IColumn
 	{
-		ForeignKeyConstraint Constraint { get; set; }
+		ForeignKeyConstraintType ConstraintType { get; set; }
 
 		ForeignKey ForeignKey { get; set; }
 	}

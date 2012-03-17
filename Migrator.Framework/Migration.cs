@@ -60,7 +60,7 @@ namespace Migrator.Framework
 	/// 	}
 	/// 	public override void Down()
 	/// 	{
-	/// 		Database.RemoveTable("Customer");
+	/// 		Database.DeleteTable("Customer");
 	/// 	}
 	/// }
 	/// </code>

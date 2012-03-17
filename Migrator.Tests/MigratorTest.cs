@@ -13,9 +13,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Migrator.Framework;
-using Migrator.Framework.Loggers;
 using NUnit.Framework;
 
 
@@ -24,7 +22,8 @@ namespace Migrator.Tests
 	[TestFixture]
 	public class MigratorTest
 	{
-		#region Setup/Teardown
+
+        Migrator _migrator;
 
 		[SetUp]
 		public void SetUp()
@@ -32,10 +31,8 @@ namespace Migrator.Tests
 			SetUpCurrentVersion(0);
 		}
 
-		#endregion
 
-		Migrator _migrator;
-
+		
 		// Collections that contain the version that are called migrating up and down
 		static readonly List<long> _upCalled = new List<long>();
 		static readonly List<long> _downCalled = new List<long>();
