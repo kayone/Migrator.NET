@@ -143,7 +143,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         public void GetColumnsReturnsProperCount()
         {
             var cols = _provider.GetColumns(TestTableName);
-            cols.Should().HaveCount(6);
+            cols.Should().HaveCount(7);
         }
 
         [Test]

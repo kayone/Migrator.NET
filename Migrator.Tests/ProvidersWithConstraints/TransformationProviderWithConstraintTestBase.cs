@@ -20,29 +20,22 @@ namespace Migrator.Tests.ProvidersWithConstraints
         protected const string OrderIdCol = "OrderId";
         protected const string OrderForeignKey = "OrderCustomerId";
 
-        public void GivenCustomersTable()
+        public void GivenCustomersTables()
         {
             _provider.AddTable(CustomersTableName,
                                new Column(CustomerIdCol, DbType.Int32, ColumnProperty.PrimaryKeyWithIdentity),
                                NameColumn);
-        }
 
-        public void GivenOrdersTableTable()
-        {
             _provider.AddTable(OrderTableName,
-                                new Column(OrderIdCol, DbType.Int32, ColumnProperty.PrimaryKeyWithIdentity),
-                                new Column(OrderForeignKey, DbType.Int32, ColumnProperty.NotNull));
+                    new Column(OrderIdCol, DbType.Int32, ColumnProperty.PrimaryKeyWithIdentity),
+                    new Column(OrderForeignKey, DbType.Int32, ColumnProperty.NotNull));
         }
 
-        [SetUp]
-        public void CustomerSetup()
-        {
-            GivenCustomersTable();
-            GivenOrdersTableTable();
-        }
 
         private string AddForeignKey()
         {
+            GivenCustomersTables();
+
             return _provider.AddForeignKey(new ForeignKey(OrderTableName, OrderForeignKey, CustomersTableName, CustomerIdCol)).Name;
         }
 
@@ -81,57 +74,50 @@ namespace Migrator.Tests.ProvidersWithConstraints
             _provider.GetColumn(TestTableName, "Test").ColumnProperty.Should().Be(ColumnProperty.Unique);
         }
 
+
+
         [Test]
-        public void CanAddForeignKey()
+        public virtual void AddRemoveUniqueConstraint()
         {
-            var name =  AddForeignKey();
+            var name = AddUniqueConstraint();
+            _provider.ConstraintExists(TestTableName, name).Should().BeTrue();
+
+            _provider.RemoveConstraint(TestTableName, name);
+            _provider.ConstraintExists(TestTableName, name).Should().BeFalse();
+        }
+
+        [Test]
+        public virtual void AddRemoveMultipleUniqueConstraint()
+        {
+            var name = AddMultipleUniqueConstraint();
+            _provider.ConstraintExists(TestTableName, name).Should().BeTrue();
+
+            _provider.RemoveConstraint(TestTableName, name);
+            _provider.ConstraintExists(TestTableName, name).Should().BeFalse();
+        }
+
+        [Test]
+        public virtual void AddRemoveCheckConstraint()
+        {
+            var name = AddCheckConstraint();
+            _provider.ConstraintExists(TestTableName, name).Should().BeTrue();
+
+            _provider.RemoveConstraint(TestTableName, name);
+            _provider.ConstraintExists(TestTableName, name).Should().BeFalse();
+        }
+
+        [Test]
+        public void AddRemoveForeignKey()
+        {
+            var name = AddForeignKey();
             _provider.ConstraintExists(OrderTableName, name).Should().BeTrue();
+
+            _provider.RemoveForeignKey(OrderTableName, name);
+            _provider.ConstraintExists(OrderTableName, name).Should().BeFalse();
         }
 
-        [Test]
-        public virtual void CanAddUniqueConstraint()
-        {
-            AddUniqueConstraint();
-            Assert.IsTrue(_provider.ConstraintExists("TestTwo", "UN_Test_TestTwo"));
-        }
+   
 
-        [Test]
-        public virtual void CanAddMultipleUniqueConstraint()
-        {
-            AddMultipleUniqueConstraint();
-            Assert.IsTrue(_provider.ConstraintExists("TestTwo", "UN_Test_TestTwo"));
-        }
-
-        [Test]
-        public virtual void CanAddCheckConstraint()
-        {
-            AddCheckConstraint();
-            Assert.IsTrue(_provider.ConstraintExists("TestTwo", "CK_TestTwo_TestId"));
-        }
-
-        [Test]
-        public void RemoveForeignKey()
-        {
-            AddForeignKey();
-            _provider.RemoveForeignKey("TestTwo", "FK_Test_TestTwo");
-            Assert.IsFalse(_provider.ConstraintExists("TestTwo", "FK_Test_TestTwo"));
-        }
-
-        [Test]
-        public void RemoveUniqueConstraint()
-        {
-            AddUniqueConstraint();
-            _provider.RemoveConstraint("TestTwo", "UN_Test_TestTwo");
-            Assert.IsFalse(_provider.ConstraintExists("TestTwo", "UN_Test_TestTwo"));
-        }
-
-        [Test]
-        public virtual void RemoveCheckConstraint()
-        {
-            AddCheckConstraint();
-            _provider.RemoveConstraint("TestTwo", "CK_TestTwo_TestId");
-            Assert.IsFalse(_provider.ConstraintExists("TestTwo", "CK_TestTwo_TestId"));
-        }
 
         [Test]
         public void RemoveUnexistingForeignKey()
@@ -140,41 +126,6 @@ namespace Migrator.Tests.ProvidersWithConstraints
             _provider.RemoveForeignKey("abc", "FK_Test_TestTwo");
             _provider.RemoveForeignKey("abc", "abc");
             _provider.RemoveForeignKey("Test", "abc");
-        }
-
-        [Test]
-        public void ConstraintExist()
-        {
-            AddForeignKey();
-            Assert.IsTrue(_provider.ConstraintExists("TestTwo", "FK_Test_TestTwo"));
-            Assert.IsFalse(_provider.ConstraintExists("abc", "abc"));
-        }
-
-        [Test]
-        public void AddTableWithCompoundPrimaryKey()
-        {
-            _provider.AddTable("Test",
-                               new Column("PersonId", DbType.Int32, ColumnProperty.PrimaryKey),
-                               new Column("AddressId", DbType.Int32, ColumnProperty.PrimaryKey)
-                );
-            Assert.IsTrue(_provider.TableExists("Test"), "Table doesn't exist");
-            Assert.IsTrue(_provider.PrimaryKeyExists("Test", "PK_Test"), "Constraint doesn't exist");
-        }
-
-        [Test]
-        public void AddTableWithCompoundPrimaryKeyShouldKeepNullForOtherProperties()
-        {
-            _provider.AddTable("Test",
-                               new Column("PersonId", DbType.Int32, ColumnProperty.PrimaryKey),
-                               new Column("AddressId", DbType.Int32, ColumnProperty.PrimaryKey),
-                               new Column("Name", DbType.String, 30, ColumnProperty.Null)
-                );
-            Assert.IsTrue(_provider.TableExists("Test"), "Table doesn't exist");
-            Assert.IsTrue(_provider.PrimaryKeyExists("Test", "PK_Test"), "Constraint doesn't exist");
-
-            Column column = _provider.GetColumn("Test", "Name");
-            Assert.IsNotNull(column);
-            Assert.IsTrue((column.ColumnProperty & ColumnProperty.Null) == ColumnProperty.Null);
         }
     }
 }

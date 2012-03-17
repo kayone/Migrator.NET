@@ -11,10 +11,6 @@
 
 #endregion
 
-using System;
-using System.Data;
-using System.IO;
-using Migrator.Framework;
 using Migrator.Providers.SqlServerCe;
 using NUnit.Framework;
 
@@ -26,21 +22,11 @@ namespace Migrator.Tests.ProvidersWithConstraints
     {
         protected override SqlServerCeTransformationProvider Provider()
         {
-            return new SqlServerCeTransformationProvider(ConnectionString);
-        }
-
-        protected virtual string ConnectionString
-        {
-            get { return "Data Source=unittest23.sdf"; }
+            return new SqlServerCeTransformationProvider("Data Source=unittest23.sdf");
         }
 
         [Test, Ignore("SqlServerCe doesn't support check constraints")]
-        public override void CanAddCheckConstraint()
-        {
-        }
-
-        [Test, Ignore("SqlServerCe doesn't support check constraints")]
-        public override void RemoveCheckConstraint()
+        public override void AddRemoveCheckConstraint()
         {
         }
 

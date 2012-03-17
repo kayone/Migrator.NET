@@ -29,23 +29,15 @@ namespace Migrator.Tests.ProvidersWithConstraints
             return new MySqlTransformationProvider(ConnectionString);
         }
 
-        public virtual string ConnectionString
+        private string ConnectionString
         {
             get { return string.Format("Server=localhost;Database=test;Uid=unittest;Pwd=unittest"); }
         }
 
-        // [Test,Ignore("MySql doesn't support check constraints")]
-        public override void CanAddCheckConstraint()
+        [Test,Ignore("MySql doesn't support check constraints")]
+        public override void AddRemoveCheckConstraint()
         {
         }
 
-        [Test]
-        public void AddTableWithMyISAMEngine()
-        {
-            _provider.AddTable("Test", 
-                               new Column("Id", DbType.Int32, ColumnProperty.NotNull),
-                               new Column("name", DbType.String, 50)
-                );
-        }
     }
 }
