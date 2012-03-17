@@ -18,7 +18,7 @@ namespace Migrator.Tests
 		[SetUp]
 		public void SetUp()
 		{
-            var providerMock = new Mock<ITransformationProvider>();
+            var providerMock = new Mock<TransformationProviderBase>();
 
             providerMock.Setup(c => c.Logger).Returns(LogManager.GetCurrentClassLogger);
 

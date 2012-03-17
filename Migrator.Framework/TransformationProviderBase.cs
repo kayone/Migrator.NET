@@ -16,17 +16,17 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
-using Migrator.Framework;
 using Migrator.Framework.Exceptions;
+using Migrator.Providers;
 using NLog;
 
-namespace Migrator.Providers
+namespace Migrator.Framework
 {
     /// <summary>
     /// Base class for every transformation providers.
     /// A 'transformation' is an operation that modifies the database.
     /// </summary>
-    public abstract class TransformationProviderBase : ITransformationProvider
+    public abstract class TransformationProviderBase 
     {
         protected readonly string _connectionString;
 

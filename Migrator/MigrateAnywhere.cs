@@ -11,7 +11,7 @@ namespace Migrator
 	{
 		bool _goForward;
 
-		public MigrateAnywhere(List<long> availableMigrations, ITransformationProvider provider, ILogger logger)
+        public MigrateAnywhere(List<long> availableMigrations, TransformationProviderBase provider, ILogger logger)
 			: base(availableMigrations, provider, logger)
 		{
 			_current = 0;

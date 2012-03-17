@@ -12,9 +12,9 @@ namespace Migrator
 	public class MigrationLoader
 	{
 		readonly List<Type> _migrationsTypes = new List<Type>();
-		readonly ITransformationProvider _provider;
+        readonly TransformationProviderBase _provider;
 
-		public MigrationLoader(ITransformationProvider provider, Assembly migrationAssembly, bool trace)
+        public MigrationLoader(TransformationProviderBase provider, Assembly migrationAssembly, bool trace)
 		{
 			_provider = provider;
 			AddMigrations(migrationAssembly);

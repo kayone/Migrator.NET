@@ -25,14 +25,14 @@ namespace Migrator
 	public class Migrator
 	{
 		readonly MigrationLoader _migrationLoader;
-		readonly ITransformationProvider _provider;
+        readonly TransformationProviderBase _provider;
 
 		string[] _args;
 		protected bool _dryrun;
 		ILogger _logger = new Logger(false);
 
 
-		public Migrator(ITransformationProvider provider, Assembly migrationAssembly, bool trace)
+        public Migrator(TransformationProviderBase provider, Assembly migrationAssembly, bool trace)
 		{
 			_provider = provider;
 	

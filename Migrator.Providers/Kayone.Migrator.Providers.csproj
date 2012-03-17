@@ -84,7 +84,6 @@
     <Compile Include="SqlServerCe\SqlServerCeTransformationProvider.cs" />
     <Compile Include="SqlServer\SqlServerDialect.cs" />
     <Compile Include="SqlServer\SqlServerTransformationProvider.cs" />
-    <Compile Include="TransformationProviderBase.cs" />
     <Compile Include="Utility\MySqlServerUtility.cs" />
     <Compile Include="Utility\SqlServerUtility.cs" />
   </ItemGroup>

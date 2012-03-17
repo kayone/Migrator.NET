@@ -55,7 +55,7 @@ namespace Migrator.Tests.Data
 		/// <see cref="ITransformationProvider"></see>.
 		/// </summary>
 		/// <seealso cref="ITransformationProvider">Migration.Framework.ITransformationProvider</seealso>
-		public ITransformationProvider Database { get; set; }
+        public TransformationProviderBase Database { get; set; }
 
 		/// <summary>
 		/// This gets called once on the first migration object.

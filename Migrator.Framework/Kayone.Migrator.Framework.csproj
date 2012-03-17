@@ -82,7 +82,6 @@
     <Compile Include="ForeignKeyConstraintType.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IMigration.cs" />
-    <Compile Include="ITransformationProvider.cs" />
     <Compile Include="Loggers\ConsoleWriter.cs" />
     <Compile Include="Loggers\IAttachableLogger.cs" />
     <Compile Include="Loggers\ILogWriter.cs" />
@@ -93,6 +92,7 @@
     <Compile Include="StringUtils.cs" />
     <Compile Include="Support\Inflector.cs" />
     <Compile Include="Support\TransformationProviderUtility.cs" />
+    <Compile Include="TransformationProviderBase.cs" />
     <Compile Include="TypeNames.cs" />
   </ItemGroup>
   <ItemGroup>

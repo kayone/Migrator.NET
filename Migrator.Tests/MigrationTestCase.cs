@@ -12,6 +12,7 @@
 #endregion
 
 using System.Reflection;
+using Migrator.Framework;
 using Migrator.Providers;
 using NUnit.Framework;
 

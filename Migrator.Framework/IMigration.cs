@@ -9,7 +9,7 @@ namespace Migrator.Framework
 		/// <see cref="ITransformationProvider"></see>.
 		/// </summary>
 		/// <seealso cref="ITransformationProvider">Migration.Framework.ITransformationProvider</seealso>
-		ITransformationProvider Database { get; set; }
+        TransformationProviderBase Database { get; set; }
 
 		/// <summary>
 		/// Defines tranformations to port the database to the current version.
