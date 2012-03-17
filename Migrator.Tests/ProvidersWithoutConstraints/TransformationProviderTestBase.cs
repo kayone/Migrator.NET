@@ -77,7 +77,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         public void GivenTableWithIdentity()
         {
             _provider.AddTable(TestTableWithIdName,
-                               new Column(IdColumnName, DbType.Int32, ColumnProperty.Identity),
+                               new Column(IdColumnName, DbType.Int32, ColumnProperty.PrimaryKeyWithIdentity),
                                TitleColumn,
                                NameColumn,
                                BinColumn,
@@ -88,7 +88,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         public void GivenTableWithPrimaryKey()
         {
             _provider.AddTable(TestTableWithPkName,
-                               new Column(IdColumnName, DbType.Int32, ColumnProperty.PrimaryKeyWithIdentity),
+                               new Column(IdColumnName, DbType.Int32, ColumnProperty.PrimaryKey),
                                TitleColumn,
                                NameColumn,
                                BinColumn,
@@ -288,9 +288,8 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void RemoveColumn()
         {
-            AddColumn();
-            _provider.RemoveColumn(TestTableName, "Test");
-            Assert.IsFalse(_provider.ColumnExists(TestTableName, "Test"));
+            _provider.RemoveColumn(TestTableName, TitleColumn.Name);
+            _provider.ColumnExists(TestTableName, TitleColumn.Name).Should().BeFalse();
         }
 
         [Test]
@@ -304,8 +303,8 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void RemoveUnexistingColumn()
         {
-            _provider.RemoveColumn(TestTableName, "abc");
-            _provider.RemoveColumn("abc", "abc");
+            Assert.Throws<ColumnDoesntExistsException>(() => _provider.RemoveColumn(TestTableName, "abc"));
+            Assert.Throws<TableDoesntExistsException>(() =>  _provider.RemoveColumn("abc", "abc"));
         }
 
         [Test]

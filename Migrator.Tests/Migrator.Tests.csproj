@@ -96,7 +96,6 @@
   <ItemGroup>
     <Compile Include="ColumnPropertyMapperTest.cs" />
     <Compile Include="Data\TestMigrations.cs" />
-    <Compile Include="JoiningTableTransformationProviderExtensionsTests.cs" />
     <Compile Include="MigrationLoaderTest.cs" />
     <Compile Include="MigrationTestCase.cs" />
     <Compile Include="MigrationTypeComparerTest.cs" />

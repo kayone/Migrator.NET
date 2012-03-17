@@ -114,30 +114,19 @@ namespace Migrator.Providers
         {
             if (TableExists(name)) throw new TableAlreadyExistsException(name);
 
-            var primaryKeys = GetPrimaryKeys(columns).ToList();
-            bool compoundPrimaryKey = primaryKeys.Count() > 1;
+            if (GetPrimaryKeys(columns).Count() > 1)
+                new InvalidOperationException("Compound primary keys aren't supported");
+
 
             var columnProviders = new List<ColumnPropertiesMapper>(columns.Length);
             foreach (Column column in columns)
             {
-                // Remove the primary key notation if compound primary key because we'll add it back later
-                if (compoundPrimaryKey && column.IsPrimaryKey)
-                {
-                    column.ColumnProperty = column.ColumnProperty ^ ColumnProperty.PrimaryKey;
-                    column.ColumnProperty = column.ColumnProperty | ColumnProperty.NotNull; // PK is always not-null
-                }
-
                 ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(column);
                 columnProviders.Add(mapper);
             }
 
             string columnsAndIndexes = JoinColumnsAndIndexes(columnProviders);
             AddTable(name, engine, columnsAndIndexes);
-
-            if (compoundPrimaryKey)
-            {
-                AddPrimaryKey(String.Format("PK_{0}", name), name, primaryKeys.Select(c => c.Name).ToArray());
-            }
         }
 
         public virtual void DeleteTable(string name)
@@ -174,13 +163,20 @@ namespace Migrator.Providers
             ExecuteNonQuery("ALTER TABLE {0} RENAME COLUMN {1} TO {2}", tableName, oldColumnName, newColumnName);
         }
 
-        public virtual void RemoveColumn(string table, string column)
+        public void RemoveColumn(string table, string column)
         {
-            if (ColumnExists(table, column))
-            {
-                column = QuoteColumnNameIfRequired(column);
-                ExecuteNonQuery(String.Format("ALTER TABLE {0} DROP COLUMN {1} ", table, column));
-            }
+            if (!TableExists(table))
+                throw new TableDoesntExistsException(table);
+            if (!ColumnExists(table, column))
+                throw new ColumnDoesntExistsException(table, column);
+
+            DoRemoveColumn(table, column);
+        }
+
+        protected virtual void DoRemoveColumn(string table, string column)
+        {
+            column = QuoteColumnNameIfRequired(column);
+            ExecuteNonQuery("ALTER TABLE {0} DROP COLUMN {1} ", table, column);
         }
 
         public virtual bool ColumnExists(string table, string column)
@@ -201,8 +197,10 @@ namespace Migrator.Providers
             ChangeColumn(table, mapper.ColumnSql);
         }
 
-        public bool TableExists(string table)
+        public virtual bool TableExists(string table)
         {
+            table = table.Trim('[', ']');
+
             return GetTables().Any(c => String.Equals(c, table, StringComparison.CurrentCultureIgnoreCase));
         }
 
@@ -215,7 +213,7 @@ namespace Migrator.Providers
 
         public bool DatabaseExists(string name)
         {
-            return GetDatabases().Any(c => string.Equals(name,c, StringComparison.InvariantCultureIgnoreCase));
+            return GetDatabases().Any(c => string.Equals(name, c, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public virtual void CreateDatabases(string databaseName)
@@ -267,14 +265,13 @@ namespace Migrator.Providers
         public virtual void AddColumn(string table, string column, DbType type, int size, ColumnProperty property,
                                       object defaultValue)
         {
-            if (ColumnExists(table, column))
-            {
-                Logger.Warn("Column {0}.{1} already exists", table, column);
-                return;
-            }
+            if (!TableExists(table))
+                throw new TableDoesntExistsException(table);
 
-            ColumnPropertiesMapper mapper =
-                Dialect.GetAndMapColumnProperties(new Column(column, type, size, property, defaultValue));
+            if (ColumnExists(table, column))
+                throw new ColumnAlreadyExistsException(table, column);
+
+            ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(new Column(column, type, size, property, defaultValue));
 
             AddColumn(table, mapper.ColumnSql);
         }
@@ -313,16 +310,16 @@ namespace Migrator.Providers
             AddColumn(table, column, type, size, property, null);
         }
 
-        public virtual void AddPrimaryKey(string name, string table, params string[] columns)
+        public void AddPrimaryKey(string tableName, string columnName)
         {
-            if (ConstraintExists(table, name))
+            var name = string.Format("PK_{0}_{1}", tableName.ToUpper(), columnName.ToUpper());
+
+            if (ConstraintExists(tableName, name))
             {
-                Logger.Warn("Primary key {0} already exists", name);
-                return;
+                throw new InvalidOperationException();
             }
-            ExecuteNonQuery(
-                String.Format("ALTER TABLE {0} ADD CONSTRAINT {1} PRIMARY KEY ({2}) ", table, name,
-                              String.Join(",", columns)));
+
+            ExecuteNonQuery("ALTER TABLE {0} ADD CONSTRAINT {1} PRIMARY KEY ({2}) ", tableName, name, columnName);
         }
 
         public virtual void AddUniqueConstraint(string name, string table, params string[] columns)
@@ -353,25 +350,25 @@ namespace Migrator.Providers
             ExecuteNonQuery(String.Format("ALTER TABLE {0} ADD CONSTRAINT {1} CHECK ({2}) ", table, name, checkSql));
         }
 
-        public virtual void GenerateForeignKey(string primaryTable, string primaryColumn, string refTable, string refColumn)
+        public virtual void AddForeignKey(string primaryTable, string primaryColumn, string refTable, string refColumn)
         {
             AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumn, refTable, refColumn);
         }
 
-        public virtual void GenerateForeignKey(string primaryTable, string[] primaryColumns, string refTable,
+        public virtual void AddForeignKey(string primaryTable, string[] primaryColumns, string refTable,
                                                string[] refColumns)
         {
             AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumns, refTable, refColumns);
         }
 
-        public virtual void GenerateForeignKey(string primaryTable, string primaryColumn, string refTable,
+        public virtual void AddForeignKey(string primaryTable, string primaryColumn, string refTable,
                                                string refColumn, ForeignKeyConstraintType constraintType)
         {
             AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumn, refTable, refColumn,
                           constraintType);
         }
 
-        public virtual void GenerateForeignKey(string primaryTable, string[] primaryColumns, string refTable,
+        public virtual void AddForeignKey(string primaryTable, string[] primaryColumns, string refTable,
                                                string[] refColumns, ForeignKeyConstraintType constraintType)
         {
             AddForeignKey("FK_" + primaryTable + "_" + refTable, primaryTable, primaryColumns, refTable, refColumns,
@@ -762,14 +759,14 @@ namespace Migrator.Providers
             AddColumn(table, column.Name, column.Type, column.Size, column.ColumnProperty, column.DefaultValue);
         }
 
-        public virtual void GenerateForeignKey(string primaryTable, string refTable)
+        public virtual void AddForeignKey(string primaryTable, string refTable)
         {
-            GenerateForeignKey(primaryTable, refTable, ForeignKeyConstraintType.NoAction);
+            AddForeignKey(primaryTable, refTable, ForeignKeyConstraintType.NoAction);
         }
 
-        public virtual void GenerateForeignKey(string primaryTable, string refTable, ForeignKeyConstraintType constraintType)
+        public virtual void AddForeignKey(string primaryTable, string refTable, ForeignKeyConstraintType constraintType)
         {
-            GenerateForeignKey(primaryTable, refTable + "Id", refTable, "Id", constraintType);
+            AddForeignKey(primaryTable, refTable + "Id", refTable, "Id", constraintType);
         }
 
         public virtual IDbCommand GetCommand()

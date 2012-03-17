@@ -144,7 +144,7 @@ namespace Migrator.Framework
         /// <param name="foreignColumn">The column that is the foreign key (eg. FK_id)</param>
         /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
         /// <param name="primaryColumn">The column that is the primary key (eg. PK_id)</param>
-        void GenerateForeignKey(string foreignTable, string foreignColumn, string primaryTable, string primaryColumn);
+        void AddForeignKey(string foreignTable, string foreignColumn, string primaryTable, string primaryColumn);
 
         /// <summary>
         /// Add a foreign key constraint when you don't care about the name of the constraint.
@@ -154,7 +154,7 @@ namespace Migrator.Framework
         /// <param name="foreignColumns">The columns that are the foreign keys (eg. FK_id)</param>
         /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
         /// <param name="primaryColumns">The column that is the primary key (eg. PK_id)</param>
-        void GenerateForeignKey(string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns);
+        void AddForeignKey(string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns);
 
         /// <summary>
         /// Add a foreign key constraint when you don't care about the name of the constraint.
@@ -165,7 +165,7 @@ namespace Migrator.Framework
         /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
         /// <param name="primaryColumns">The columns that are the primary keys (eg. PK_id)</param>
         /// <param name="constraintType">Constraint parameters</param>
-        void GenerateForeignKey(string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns, ForeignKeyConstraintType constraintType);
+        void AddForeignKey(string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns, ForeignKeyConstraintType constraintType);
 
         /// <summary>
         /// Add a foreign key constraint when you don't care about the name of the constraint.
@@ -176,7 +176,7 @@ namespace Migrator.Framework
         /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
         /// <param name="primaryColumn">The column that is the primary key (eg. PK_id)</param>
         /// <param name="constraintType">Constraint parameters</param>
-        void GenerateForeignKey(string foreignTable, string foreignColumn, string primaryTable, string primaryColumn,
+        void AddForeignKey(string foreignTable, string foreignColumn, string primaryTable, string primaryColumn,
                                 ForeignKeyConstraintType constraintType);
 
         /// <summary>
@@ -188,7 +188,7 @@ namespace Migrator.Framework
         /// </summary>
         /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
         /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
-        void GenerateForeignKey(string foreignTable, string primaryTable);
+        void AddForeignKey(string foreignTable, string primaryTable);
 
         /// <summary>
         /// Add a foreign key constraint when you don't care about the name of the constraint.
@@ -200,15 +200,14 @@ namespace Migrator.Framework
         /// <param name="foreignTable">The table that the foreign key will be created in (eg. Table.FK_id)</param>
         /// <param name="primaryTable">The table that holds the primary key (eg. Table.PK_id)</param>
         /// <param name="constraintType"></param>
-        void GenerateForeignKey(string foreignTable, string primaryTable, ForeignKeyConstraintType constraintType);
+        void AddForeignKey(string foreignTable, string primaryTable, ForeignKeyConstraintType constraintType);
 
         /// <summary>
         /// Add a primary key to a table
         /// </summary>
-        /// <param name="name">The name of the primary key to add.</param>
-        /// <param name="table">The name of the table that will get the primary key.</param>
-        /// <param name="columns">The name of the column or columns that are in the primary key.</param>
-        void AddPrimaryKey(string name, string table, params string[] columns);
+        /// <param name="tableName">The name of the table that will get the primary key.</param>
+        /// <param name="columnName">The name of the column that will be the primary key.</param>
+        void AddPrimaryKey(string tableName, string columnName);
 
         /// <summary>
         /// Add a constraint to a table

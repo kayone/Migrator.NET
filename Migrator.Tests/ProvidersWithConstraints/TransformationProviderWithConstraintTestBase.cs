@@ -16,10 +16,9 @@ namespace Migrator.Tests.ProvidersWithConstraints
             _provider.AddForeignKey("FK_Test_TestTwo", "TestTwo", "TestId", "Test", "Id");
         }
 
-        public void AddPrimaryKey()
+        private void AddPrimaryKey()
         {
-            GivenTestTable();
-            _provider.AddPrimaryKey("PK_Test", "Test", "Id");
+            _provider.AddPrimaryKey(TestTableName, IdColumnName);
         }
 
         public void AddUniqueConstraint()
@@ -41,14 +40,9 @@ namespace Migrator.Tests.ProvidersWithConstraints
         public void CanAddPrimaryKey()
         {
             AddPrimaryKey();
-            Assert.IsTrue(_provider.PrimaryKeyExists("Test", "PK_Test"));
+            _provider.PrimaryKeyExists(TestTableName, "PK_" + TestTableName + "_" + IdColumnName);
         }
 
-        [Test]
-        public void AddIndexedColumn()
-        {
-            _provider.AddColumn("TestTwo", "Test", DbType.String, 50, ColumnProperty.Indexed);
-        }
 
         [Test]
         public void AddUniqueColumn()

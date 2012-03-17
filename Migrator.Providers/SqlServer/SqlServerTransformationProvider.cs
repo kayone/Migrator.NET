@@ -43,7 +43,7 @@ namespace Migrator.Providers.SqlServer
         // so that it would be usable by all the SQL Server implementations
         public override bool ConstraintExists(string table, string name)
         {
-            using (IDataReader reader = ExecuteQuery(string.Format("SELECT TOP 1 * FROM sysobjects WHERE id = object_id('{0}')", name)))
+            using (IDataReader reader = ExecuteQuery("SELECT TOP 1 * FROM sysobjects WHERE id = object_id('{0}')", name))
             {
                 return reader.Read();
             }
@@ -54,10 +54,10 @@ namespace Migrator.Providers.SqlServer
             ExecuteNonQuery("ALTER TABLE {0} ADD {1}", table, sqlColumn);
         }
 
-        public override void RemoveColumn(string table, string column)
+        protected override void DoRemoveColumn(string table, string column)
         {
             DeleteColumnConstraints(table, column);
-            base.RemoveColumn(table, column);
+            base.DoRemoveColumn(table, column);
         }
 
         public override List<string> GetDatabases()
@@ -67,7 +67,7 @@ namespace Migrator.Providers.SqlServer
 
         protected override void DoRenameColumn(string tableName, string oldColumnName, string newColumnName)
         {
-            ExecuteNonQuery(String.Format("EXEC sp_rename '{0}.{1}', '{2}', 'COLUMN'", tableName, oldColumnName, newColumnName));
+            ExecuteNonQuery("EXEC sp_rename '{0}.{1}', '{2}', 'COLUMN'", tableName, oldColumnName, newColumnName);
         }
 
         public override Dialect Dialect
@@ -120,6 +120,16 @@ namespace Migrator.Providers.SqlServer
         public virtual void RemoveIndex(string table, string name)
         {
             throw new NotImplementedException();
+        }
+
+        public override bool TableExists(string table)
+        {
+            if (table.Contains("."))
+            {
+                table = table.Substring(table.IndexOf(".") + 1);
+            }
+
+            return base.TableExists(table);
         }
     }
 }

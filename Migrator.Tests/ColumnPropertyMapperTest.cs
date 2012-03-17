@@ -54,14 +54,7 @@ namespace Migrator.Tests
 			Assert.AreEqual("[foo] varchar(30)", mapper.ColumnSql);
 		}
 
-		[Test]
-		public void SqlServerIndexSqlIsNoNullWhenIndexed()
-		{
-			var mapper = new ColumnPropertiesMapper(new SqlServerDialect(), "char(1)");
-			mapper.MapColumnProperties(new Column("foo", DbType.StringFixedLength, 1, ColumnProperty.Indexed));
-			Assert.IsNull(mapper.IndexSql);
-		}
-
+	
         [Test]
         public void SQLiteIndexSqlWithEmptyStringDefault()
         {

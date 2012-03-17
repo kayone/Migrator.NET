@@ -36,12 +36,6 @@ namespace Migrator.Framework
 		
         
         /// <summary>
-		/// Indexed Column
-		/// </summary>
-		Indexed = 16,
-		
-        
-        /// <summary>
 		/// Unsigned Column
 		/// </summary>
 		Unsigned = 32,

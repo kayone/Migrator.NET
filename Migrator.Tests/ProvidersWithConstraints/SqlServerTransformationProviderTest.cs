@@ -37,8 +37,8 @@ namespace Migrator.Tests.ProvidersWithConstraints
         [Test]
         public void ByteColumnWillBeCreatedAsBlob()
         {
-            _provider.AddColumn("TestTwo", "BlobColumn", DbType.Byte);
-            Assert.IsTrue(_provider.ColumnExists("TestTwo", "BlobColumn"));
+            _provider.AddColumn(TestTableName, "BlobColumn", DbType.Byte);
+            _provider.ColumnExists(TestTableName, "BlobColumn").Should().BeTrue();
         }
 
         [Test]
@@ -51,19 +51,19 @@ namespace Migrator.Tests.ProvidersWithConstraints
         [Test]
         public void TableExistsShouldWorkWithBracketsAndSchemaNameAndTableName()
         {
-            _provider.TableExists("[dbo].[TestTwo]").Should().BeTrue();
+            _provider.TableExists("[dbo].[TestTable]").Should().BeTrue();
         }
 
         [Test]
         public void TableExistsShouldWorkWithSchemaNameAndTableName()
         {
-            Assert.IsTrue(_provider.TableExists("dbo.TestTwo"));
+            Assert.IsTrue(_provider.TableExists("dbo.TestTable"));
         }
 
         [Test]
         public void TableExistsShouldWorkWithTableNamesWithBracket()
         {
-            Assert.IsTrue(_provider.TableExists("[TestTwo]"));
+            Assert.IsTrue(_provider.TableExists("[TestTable]"));
         }
     }
 }

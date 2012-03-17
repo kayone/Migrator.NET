@@ -76,7 +76,6 @@ namespace Migrator.Framework
 		public void MapColumnProperties(Column column)
 		{
 			Name = column.Name;
-			indexed = PropertySelected(column.ColumnProperty, ColumnProperty.Indexed);
 
 			List<string> vals = new List<string>();
 			vals.Add(dialect.ColumnNameNeedsQuote || dialect.IsReservedWord(Name) ? QuotedName : Name);

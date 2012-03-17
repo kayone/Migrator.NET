@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.Linq;
 using Migrator.Framework;
 using Migrator.Framework.Exceptions;
 
@@ -32,21 +33,11 @@ namespace Migrator.Providers.SQLite
             // NOOP Because SQLite doesn't support foreign keys
         }
 
-        public override void RemoveColumn(string table, string column)
+        protected override void DoRemoveColumn(string table, string column)
         {
-            if (!(TableExists(table) && ColumnExists(table, column)))
-                return;
-
             string[] origColDefs = GetColumnDefs(table);
-            var colDefs = new List<string>();
 
-            foreach (string origdef in origColDefs)
-            {
-                if (!ColumnMatch(column, origdef))
-                    colDefs.Add(origdef);
-            }
-
-            string[] newColDefs = colDefs.ToArray();
+            string[] newColDefs = origColDefs.Where(origdef => !ColumnMatch(column, origdef)).ToArray();
             string colDefsSql = String.Join(",", newColDefs);
 
             string[] colNames = ParseSqlForColumnNames(newColDefs);
