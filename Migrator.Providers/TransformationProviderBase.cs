@@ -215,7 +215,7 @@ namespace Migrator.Providers
 
         public bool DatabaseExists(string name)
         {
-            return GetDatabases().Any(c => c == name);
+            return GetDatabases().Any(c => string.Equals(name,c, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public virtual void CreateDatabases(string databaseName)

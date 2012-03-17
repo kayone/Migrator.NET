@@ -31,7 +31,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
 
         public virtual string ConnectionString
         {
-            get { return string.Format("Server=localhost;Database=test;Uid=root;Pwd="); }
+            get { return string.Format("Server=localhost;Database=test;Uid=unittest;Pwd=unittest"); }
         }
 
         // [Test,Ignore("MySql doesn't support check constraints")]

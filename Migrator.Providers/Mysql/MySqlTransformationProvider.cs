@@ -163,7 +163,7 @@ namespace Migrator.Providers.Mysql
 
         public override List<string> GetDatabases()
         {
-            throw new NotImplementedException();
+            return ExecuteStringQuery("SHOW DATABASES");
         }
     }
 }

@@ -47,6 +47,10 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
                 _provider.CreateDatabases(TEST_DB_NAME);
                 _provider.SwitchDatabase(TEST_DB_NAME);
             }
+            else
+            {
+                _provider.WipeDatabase(_provider.Connection.Database);
+            }
 
             GivenTestTable();
         }
@@ -392,7 +396,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         {
             _provider.Insert(TestTableName, new[] { IdColumnName, TitleColumn.Name }, new[] { "1", "Muad'Dib" });
 
-            var data = ReadStringData(TestTableName, NameColumn.Name);
+            var data = ReadStringData(TestTableName, TitleColumn.Name);
 
             data.Should().HaveCount(1);
             data.Should().Contain("Muad'Dib");

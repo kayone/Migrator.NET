@@ -33,14 +33,6 @@ namespace Migrator.Tests.ProvidersWithConstraints
             get { return String.Format("Data Source={0}", "unittest.sdf"); }
         }
 
-        [Test]
-        public void AddIndex()
-        {
-            _provider.AddColumn("TestTwo", "TestIndexed", DbType.Boolean);
-            _provider.AddIndex("IX_Test_index", "TestTwo", new[] { "TestIndexed" });
-            Assert.IsTrue(_provider.IndexExists("IX_Test_index", "TestTwo"));
-        }
-
         [Test, Ignore("SqlServerCe doesn't support check constraints")]
         public override void CanAddCheckConstraint()
         {
