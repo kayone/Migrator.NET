@@ -68,6 +68,7 @@
     <Compile Include="Dialect.cs" />
     <Compile Include="Exceptions\ColumnAlreadyExistsException.cs" />
     <Compile Include="Exceptions\ColumnDoesntExistsException.cs" />
+    <Compile Include="Exceptions\ConstraintAlreadyExistsException.cs" />
     <Compile Include="Exceptions\ForeignKeyAlreadyExistsException.cs" />
     <Compile Include="Exceptions\IndexAlreadyExistsException.cs" />
     <Compile Include="Exceptions\TableAlreadyExistsException.cs" />

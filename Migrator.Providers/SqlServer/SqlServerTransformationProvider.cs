@@ -35,7 +35,7 @@ namespace Migrator.Providers.SqlServer
 
         protected virtual void CreateConnection()
         {
-            Connection = new SqlConnection(_connectionString);
+            Connection = new SqlConnection(ConnectionString);
             Connection.Open();
         }
 
@@ -106,11 +106,6 @@ namespace Migrator.Providers.SqlServer
                 + "WHERE cont.parent_obj = col.id AND cnt.constid = cont.id AND cnt.colid=col.colid "
                 + "AND col.name = '{1}' AND col.id = object_id('{0}')",
                 table, column);
-        }
-
-        public virtual void RemoveIndex(string table, string name)
-        {
-            throw new NotImplementedException();
         }
 
         public override bool TableExists(string table)

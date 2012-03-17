@@ -17,7 +17,6 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using Migrator.Framework.Exceptions;
-using Migrator.Providers;
 using NLog;
 
 namespace Migrator.Framework
@@ -26,21 +25,20 @@ namespace Migrator.Framework
     /// Base class for every transformation providers.
     /// A 'transformation' is an operation that modifies the database.
     /// </summary>
-    public abstract class TransformationProviderBase 
+    public abstract class TransformationProviderBase
     {
-        protected readonly string _connectionString;
+        protected readonly string ConnectionString;
 
-        readonly ForeignKeyConstraintMapper _constraintMapper = new ForeignKeyConstraintMapper();
-        List<long> _appliedMigrations;
-        public IDbConnection Connection { get; set; }
+        private readonly ForeignKeyConstraintMapper _constraintMapper = new ForeignKeyConstraintMapper();
+        private List<long> _appliedMigrations;
+        public IDbConnection Connection { get; protected set; }
 
 
-        IDbTransaction _transaction;
+        private IDbTransaction _transaction;
 
-        public TransformationProviderBase(string connectionString)
+        protected TransformationProviderBase(string connectionString)
         {
-
-            _connectionString = connectionString;
+            ConnectionString = connectionString;
             Logger = LogManager.GetCurrentClassLogger();
         }
 
@@ -68,7 +66,7 @@ namespace Migrator.Framework
             return columns.ToArray();
         }
 
-        public virtual Column GetColumn(string table, string columnName)
+        public Column GetColumn(string table, string columnName)
         {
             return Array.Find(GetColumns(table), column => column.Name == columnName);
         }
@@ -102,7 +100,7 @@ namespace Migrator.Framework
         }
 
 
-        public virtual void AddTable(string name, params Column[] columns)
+        public void AddTable(string name, params Column[] columns)
         {
             if (TableExists(name)) throw new TableAlreadyExistsException(name);
 
@@ -121,7 +119,7 @@ namespace Migrator.Framework
             AddTable(name, columnsAndIndexes);
         }
 
-        public virtual void DropTable(string name)
+        public void DropTable(string name)
         {
             if (TableExists(name))
                 ExecuteNonQuery("DROP TABLE {0}", name);
@@ -208,21 +206,20 @@ namespace Migrator.Framework
             return GetDatabases().Any(c => string.Equals(name, c, StringComparison.InvariantCultureIgnoreCase));
         }
 
-        public virtual void CreateDatabases(string databaseName)
+        public void CreateDatabases(string databaseName)
         {
             ExecuteNonQuery("CREATE DATABASE {0}", databaseName);
         }
 
-        public virtual void DropDatabases(string databaseName)
+        public void DropDatabases(string databaseName)
         {
             ExecuteNonQuery("DROP DATABASE {0}", databaseName);
         }
 
-
-
         public bool IndexExists(string indexName, string tableName)
         {
-            return GetIndexes(tableName).Any(c => string.Equals(c, indexName, StringComparison.InvariantCultureIgnoreCase));
+            return
+                GetIndexes(tableName).Any(c => string.Equals(c, indexName, StringComparison.InvariantCultureIgnoreCase));
         }
 
 
@@ -240,7 +237,9 @@ namespace Migrator.Framework
 
         public List<string> GetIndexes(string tableName)
         {
-            var indexes = ExecuteStringQuery("SELECT Index_Name FROM INFORMATION_SCHEMA.Indexes WHERE Table_Name = '{0}'", tableName);
+            var indexes =
+                ExecuteStringQuery("SELECT Index_Name FROM INFORMATION_SCHEMA.Indexes WHERE Table_Name = '{0}'",
+                                   tableName);
             return indexes;
         }
 
@@ -248,8 +247,8 @@ namespace Migrator.Framework
         {
             Connection.ChangeDatabase(databaseName);
 
-            var tables = GetTables();
-
+            var tables = GetTables().ToList();
+  
             foreach (var table in tables)
             {
                 DropTable(table);
@@ -258,47 +257,48 @@ namespace Migrator.Framework
 
 
 
-        public void AddPrimaryKey(string tableName, string columnName)
+        public string AddPrimaryKey(string tableName, string columnName)
         {
             var name = string.Format("PK_{0}_{1}", tableName.ToUpper(), columnName.ToUpper());
 
             if (ConstraintExists(tableName, name))
-            {
-                throw new InvalidOperationException();
-            }
+                new ConstraintAlreadyExistsException(tableName, name);
 
             ExecuteNonQuery("ALTER TABLE {0} ADD CONSTRAINT {1} PRIMARY KEY ({2}) ", tableName, name, columnName);
+
+            return name;
         }
 
-        public virtual void AddUniqueConstraint(string name, string table, params string[] columns)
+        public string AddUniqueConstraint(string tableName, params string[] columns)
         {
-            if (ConstraintExists(table, name))
-            {
-                Logger.Warn("Constraint {0} already exists", name);
-                return;
-            }
+            var name = GetKeyName("UQ", tableName, columns);
+
+            if (ConstraintExists(tableName, name))
+                new ConstraintAlreadyExistsException(tableName, name);
 
             QuoteColumnNames(columns);
 
-            table = QuoteTableNameIfRequired(table);
+            tableName = QuoteTableNameIfRequired(tableName);
 
-            ExecuteNonQuery("ALTER TABLE {0} ADD CONSTRAINT {1} UNIQUE({2}) ", table, name, string.Join(", ", columns));
+            ExecuteNonQuery("ALTER TABLE {0} ADD CONSTRAINT {1} UNIQUE({2}) ", tableName, name, string.Join(", ", columns));
+
+            return name;
         }
 
-        public virtual void AddCheckConstraint(string name, string table, string checkSql)
+        public virtual string AddCheckConstraint(string name, string tableName, string checkSql)
         {
-            if (ConstraintExists(table, name))
-            {
-                Logger.Warn("Constraint {0} already exists", name);
-                return;
-            }
+            if (ConstraintExists(tableName, name))
+                new ConstraintAlreadyExistsException(tableName, name);
 
-            table = QuoteTableNameIfRequired(table);
+            tableName = QuoteTableNameIfRequired(tableName);
 
-            ExecuteNonQuery(String.Format("ALTER TABLE {0} ADD CONSTRAINT {1} CHECK ({2}) ", table, name, checkSql));
+            ExecuteNonQuery(String.Format("ALTER TABLE {0} ADD CONSTRAINT {1} CHECK ({2}) ", tableName, name, checkSql));
+
+
+            return name;
         }
 
-        public virtual void AddForeignKey(ForeignKey foreignKey)
+        public virtual ForeignKey AddForeignKey(ForeignKey foreignKey)
         {
             if (ConstraintExists(foreignKey.ForeignTable, foreignKey.Name))
                 throw new ForeignKeyAlreadyExistsException(foreignKey.ForeignTable, foreignKey.Name);
@@ -314,22 +314,26 @@ namespace Migrator.Framework
                 String.Format(
                     "ALTER TABLE {0} ADD CONSTRAINT {1} FOREIGN KEY ({2}) REFERENCES {3} ({4}) ON UPDATE {5} ON DELETE {6}",
                     foreignKey.ForeignTable, foreignKey.Name, String.Join(",", foreignKey.ForeignColumns),
-                    foreignKey.PrimaryTable, String.Join(",", foreignKey.PrimaryColumns), constraintResolved, constraintResolved));
+                    foreignKey.PrimaryTable, String.Join(",", foreignKey.PrimaryColumns), constraintResolved,
+                    constraintResolved));
+
+
+            return foreignKey;
         }
 
 
-        public virtual List<string> GetConstraints(string tableName)
+        public IEnumerable<string> GetConstraints(string tableName)
         {
             if (!TableExists(tableName))
                 throw new TableDoesntExistsException(tableName);
 
-            return ExecuteStringQuery("SELECT CONSTRAINT_NAME FROM information_schema.table_constraints where table_name = {0}", tableName);
+            return ExecuteStringQuery("SELECT CONSTRAINT_NAME FROM information_schema.table_constraints where table_name = '{0}'", tableName);
         }
 
         public bool ConstraintExists(string tableName, string constraintName)
         {
             return GetConstraints(tableName).Any(
-                 c => string.Equals(c, constraintName, StringComparison.InvariantCultureIgnoreCase));
+                c => string.Equals(c, constraintName, StringComparison.InvariantCultureIgnoreCase));
         }
 
 
@@ -439,7 +443,10 @@ namespace Migrator.Framework
             if (string.IsNullOrEmpty(table)) throw new ArgumentNullException("table");
             if (columns == null) throw new ArgumentNullException("columns");
             if (values == null) throw new ArgumentNullException("values");
-            if (columns.Length != values.Length) throw new Exception(string.Format("The number of columns: {0} does not match the number of supplied values: {1}", columns.Length, values.Length));
+            if (columns.Length != values.Length)
+                throw new Exception(
+                    string.Format("The number of columns: {0} does not match the number of supplied values: {1}",
+                                  columns.Length, values.Length));
 
             table = QuoteTableNameIfRequired(table);
 
@@ -462,7 +469,8 @@ namespace Migrator.Framework
 
                 command.Transaction = _transaction;
 
-                command.CommandText = String.Format("INSERT INTO {0} ({1}) VALUES ({2})", table, columnNames, parameterNames);
+                command.CommandText = String.Format("INSERT INTO {0} ({1}) VALUES ({2})", table, columnNames,
+                                                    parameterNames);
                 command.CommandType = CommandType.Text;
 
 
@@ -487,23 +495,27 @@ namespace Migrator.Framework
             }
         }
 
-        public virtual int DeleteData(string table, string[] columns, string[] values)
+        public int DeleteData(string table, string[] columns = null, string[] values = (string[]) null)
         {
             if (null == columns || null == values)
             {
                 return ExecuteNonQuery(String.Format("DELETE FROM {0}", table));
             }
-            return ExecuteNonQuery(String.Format("DELETE FROM {0} WHERE ({1})", table, JoinColumnsAndValues(columns, values)));
+            return
+                ExecuteNonQuery(String.Format("DELETE FROM {0} WHERE ({1})", table,
+                                              JoinColumnsAndValues(columns, values)));
         }
 
-        public virtual int DeleteData(string table, string wherecolumn, string wherevalue)
+        public int DeleteData(string table, string wherecolumn, string wherevalue)
         {
             if (string.IsNullOrEmpty(wherecolumn) && string.IsNullOrEmpty(wherevalue))
             {
-                return DeleteData(table, (string[])null, null);
+                return DeleteData(table);
             }
 
-            return ExecuteNonQuery(String.Format("DELETE FROM {0} WHERE {1} = {2}", table, wherecolumn, QuoteValues(wherevalue)));
+            return
+                ExecuteNonQuery(String.Format("DELETE FROM {0} WHERE {1} = {2}", table, wherecolumn,
+                                              QuoteValues(wherevalue)));
         }
 
         /// <summary>
@@ -700,7 +712,7 @@ namespace Migrator.Framework
             return String.Join(", ", columns.Select(column => column.ColumnSql));
         }
 
-        IDbCommand BuildCommand(string sql)
+        private IDbCommand BuildCommand(string sql)
         {
             EnsureHasConnection();
             IDbCommand cmd = Connection.CreateCommand();
@@ -712,11 +724,6 @@ namespace Migrator.Framework
             }
 
             return cmd;
-        }
-
-        public int DeleteData(string table)
-        {
-            return DeleteData(table, null, (string[])null);
         }
 
         private void EnsureHasConnection()
@@ -776,7 +783,7 @@ namespace Migrator.Framework
             {
                 parameter.Value = DBNull.Value;
             }
-            else if (value is Guid || value is Guid?)
+            else if (value is Guid)
             {
                 parameter.DbType = DbType.Guid;
                 parameter.Value = (Guid)value;
@@ -808,16 +815,26 @@ namespace Migrator.Framework
             }
             else
             {
-                throw new NotSupportedException(string.Format("TransformationProvider does not support value: {0} of type: {1}", value, value.GetType()));
+                throw new NotSupportedException(
+                    string.Format("TransformationProvider does not support value: {0} of type: {1}", value,
+                                  value.GetType()));
             }
         }
 
-        void QuoteColumnNames(string[] primaryColumns)
+        private void QuoteColumnNames(string[] primaryColumns)
         {
             for (var i = 0; i < primaryColumns.Length; i++)
             {
                 primaryColumns[i] = QuoteColumnNameIfRequired(primaryColumns[i]);
             }
+        }
+
+
+
+        private static string GetKeyName(string prefix, string tableName, string[] Columns)
+        {
+            var cols = Columns.Select(c => c.ToUpper());
+            return string.Format("{0}_{1}_{2}", prefix, tableName, string.Join("_", cols));
         }
     }
 

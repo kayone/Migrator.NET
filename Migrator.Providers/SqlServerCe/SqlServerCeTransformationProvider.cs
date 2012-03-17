@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlServerCe;
+using System.IO;
 using Migrator.Framework;
 using Migrator.Framework.Exceptions;
 using Migrator.Providers.SqlServer;
@@ -33,7 +34,14 @@ namespace Migrator.Providers.SqlServerCe
 
         protected override void CreateConnection()
         {
-            Connection = new SqlCeConnection(_connectionString);
+
+            Connection = new SqlCeConnection(ConnectionString);
+
+            if (!File.Exists(Connection.Database))
+            {
+                CreateDatabaseFile();
+            }
+
             Connection.Open();
         }
 
@@ -85,6 +93,33 @@ namespace Migrator.Providers.SqlServerCe
             RemoveColumn(tableName, oldColumnName);
         }
 
+        public override void WipeDatabase(string databaseName)
+        {
+            var connection = (SqlCeConnection)Connection;
+
+            if (connection.State != ConnectionState.Closed)
+            {
+                connection.Close();
+            }
+
+            if (File.Exists(connection.DataSource))
+            {
+                File.Delete(connection.DataSource);
+            }
+
+            CreateDatabaseFile();
+            connection.Open();
+        }
+
+
+        private void CreateDatabaseFile()
+        {
+            using (var engine = new SqlCeEngine(Connection.ConnectionString))
+            {
+                engine.CreateDatabase();
+            }
+        }
+
 
         protected override string FindConstraints(string table, string column)
         {
@@ -92,11 +127,6 @@ namespace Migrator.Providers.SqlServerCe
                 string.Format("SELECT cont.constraint_name FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE cont "
                               + "WHERE cont.Table_Name='{0}' AND cont.column_name = '{1}'",
                               table, column);
-        }
-
-        public override void AddCheckConstraint(string name, string table, string checkSql)
-        {
-            throw new NotSupportedException("Check constraints aren't supported in SQL CE");
         }
     }
 }

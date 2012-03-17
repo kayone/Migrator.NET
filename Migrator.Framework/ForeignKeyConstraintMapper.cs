@@ -1,6 +1,4 @@
-using Migrator.Framework;
-
-namespace Migrator.Providers
+namespace Migrator.Framework
 {
 	public class ForeignKeyConstraintMapper
 	{

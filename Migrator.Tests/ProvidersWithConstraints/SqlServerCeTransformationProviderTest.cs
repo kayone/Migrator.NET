@@ -13,6 +13,7 @@
 
 using System;
 using System.Data;
+using System.IO;
 using Migrator.Framework;
 using Migrator.Providers.SqlServerCe;
 using NUnit.Framework;
@@ -28,9 +29,9 @@ namespace Migrator.Tests.ProvidersWithConstraints
             return new SqlServerCeTransformationProvider(ConnectionString);
         }
 
-        public virtual string ConnectionString
+        protected virtual string ConnectionString
         {
-            get { return String.Format("Data Source={0}", "unittest.sdf"); }
+            get { return "Data Source=unittest23.sdf"; }
         }
 
         [Test, Ignore("SqlServerCe doesn't support check constraints")]

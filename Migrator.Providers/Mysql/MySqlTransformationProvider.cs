@@ -15,8 +15,8 @@ namespace Migrator.Providers.Mysql
         public MySqlTransformationProvider(string connectionString)
             : base(connectionString)
         {
-            Connection = new MySqlConnection(_connectionString);
-            Connection.ConnectionString = _connectionString;
+            Connection = new MySqlConnection(ConnectionString);
+            Connection.ConnectionString = ConnectionString;
             Connection.Open();
         }
 
@@ -46,6 +46,12 @@ namespace Migrator.Providers.Mysql
         {
             return ConstraintExists(table, "PRIMARY");
         }
+
+        public override ForeignKey AddForeignKey(ForeignKey foreignKey)
+        {
+            throw new NotImplementedException();
+        }
+
 
         // XXX: Using INFORMATION_SCHEMA.COLUMNS should work, but it was causing trouble, so I used the MySQL specific thing.
         public override Column[] GetColumns(string table)

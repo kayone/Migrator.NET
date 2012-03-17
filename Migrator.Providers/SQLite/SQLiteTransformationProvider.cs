@@ -17,20 +17,9 @@ namespace Migrator.Providers.SQLite
         public SQLiteTransformationProvider(string connectionString)
             : base(connectionString)
         {
-            Connection = new SQLiteConnection(_connectionString);
-            Connection.ConnectionString = _connectionString;
+            Connection = new SQLiteConnection(ConnectionString);
+            Connection.ConnectionString = ConnectionString;
             Connection.Open();
-        }
-
-        public override void AddForeignKey(ForeignKey foreignKey)
-        {
-            // NOOP Because SQLite doesn't support foreign keys
-        }
-
-
-        public override void RemoveForeignKey(string name, string table)
-        {
-            // NOOP Because SQLite doesn't support foreign keys
         }
 
         protected override void DoRemoveColumn(string table, string column)
@@ -43,13 +32,13 @@ namespace Migrator.Providers.SQLite
             string[] colNames = ParseSqlForColumnNames(newColDefs);
             string colNamesSql = String.Join(",", colNames);
 
-            AddTable(table + "_temp",  colDefsSql);
+            AddTable(table + "_temp", colDefsSql);
             ExecuteQuery(String.Format("INSERT INTO {0}_temp SELECT {1} FROM {0}", table, colNamesSql));
             DropTable(table);
             ExecuteQuery(String.Format("ALTER TABLE {0}_temp RENAME TO {0}", table));
         }
 
-        protected override void  DoRenameColumn(string tableName, string oldColumnName, string newColumnName)
+        protected override void DoRenameColumn(string tableName, string oldColumnName, string newColumnName)
         {
             string[] columnDefs = GetColumnDefs(tableName);
             string columnDef = Array.Find(columnDefs, col => ColumnMatch(oldColumnName, col));
@@ -82,7 +71,7 @@ namespace Migrator.Providers.SQLite
             throw new NotSupportedException();
         }
 
-   
+
 
         public override IEnumerable<string> GetTables()
         {

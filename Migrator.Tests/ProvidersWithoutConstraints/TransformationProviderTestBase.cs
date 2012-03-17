@@ -7,7 +7,6 @@ using FluentAssertions;
 using Kayone.TestFoundation;
 using Migrator.Framework;
 using Migrator.Framework.Exceptions;
-using Migrator.Providers;
 using NUnit.Framework;
 
 namespace Migrator.Tests.ProvidersWithoutConstraints
@@ -28,6 +27,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
 
 
         protected readonly Column TitleColumn = new Column("TitleColumn", DbType.String, 100, ColumnProperty.Null);
+        protected readonly Column NumberColumn = new Column("NumberColumn", DbType.Int32, ColumnProperty.Null);
         protected readonly Column NameColumn = new Column("NameColumn", DbType.String, 50, ColumnProperty.Null);
         protected readonly Column BinColumn = new Column("BinColumn", DbType.Binary, ColumnProperty.Null);
         protected readonly Column BoolColumn = new Column("BoolColumn", DbType.Boolean, ColumnProperty.Null);
@@ -68,6 +68,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         {
             _provider.AddTable(TestTableName,
                                new Column(IdColumnName, DbType.Int32, ColumnProperty.NotNull),
+                              NumberColumn,
                                TitleColumn,
                                NameColumn,
                                BinColumn,
@@ -80,6 +81,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
             _provider.AddTable(TestTableWithIdName,
                                new Column(IdColumnName, DbType.Int32, ColumnProperty.PrimaryKeyWithIdentity),
                                TitleColumn,
+                               NumberColumn,
                                NameColumn,
                                BinColumn,
                                BoolColumn,
@@ -91,6 +93,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
             _provider.AddTable(TestTableWithPkName,
                                new Column(IdColumnName, DbType.Int32, ColumnProperty.PrimaryKey),
                                TitleColumn,
+                               NumberColumn,
                                NameColumn,
                                BinColumn,
                                BoolColumn,
@@ -244,14 +247,14 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void AddDecimalColumn()
         {
-            _provider.AddColumn(TestTableName, new Column( "TestDecimal", DbType.Decimal, 38));
+            _provider.AddColumn(TestTableName, new Column("TestDecimal", DbType.Decimal, 38));
             _provider.ColumnExists(TestTableName, "TestDecimal").Should().BeTrue();
         }
 
         [Test]
         public void AddColumnWithDefault()
         {
-            _provider.AddColumn(TestTableName,new Column( "TestWithDefault", DbType.Int32, 50, 0, 10));
+            _provider.AddColumn(TestTableName, new Column("TestWithDefault", DbType.Int32, 50, 0, 10));
             _provider.ColumnExists(TestTableName, "TestWithDefault").Should().BeTrue();
         }
 
@@ -261,7 +264,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
             _provider.AddColumn(TestTableName, new Column("TestWithDefault", DbType.Int32, 10));
             _provider.ColumnExists(TestTableName, "TestWithDefault").Should().BeTrue();
 
-            _provider.AddColumn(TestTableName, new Column( "TestWithDefaultString", DbType.String, "'foo'"));
+            _provider.AddColumn(TestTableName, new Column("TestWithDefaultString", DbType.String, "'foo'"));
             _provider.ColumnExists(TestTableName, "TestWithDefaultString").Should().BeTrue();
         }
 
@@ -305,7 +308,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         public void RemoveUnexistingColumn()
         {
             Assert.Throws<ColumnDoesntExistsException>(() => _provider.RemoveColumn(TestTableName, "abc"));
-            Assert.Throws<TableDoesntExistsException>(() =>  _provider.RemoveColumn("abc", "abc"));
+            Assert.Throws<TableDoesntExistsException>(() => _provider.RemoveColumn("abc", "abc"));
         }
 
         [Test]

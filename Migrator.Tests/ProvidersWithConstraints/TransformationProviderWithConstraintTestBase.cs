@@ -12,37 +12,65 @@ namespace Migrator.Tests.ProvidersWithConstraints
     /// </summary>
     public abstract class TransformationProviderWithConstraintTestBase<TProvider> : TransformationProviderTestBase<TProvider> where TProvider : TransformationProviderBase
     {
-        private void AddForeignKey()
+
+        private const string CustomersTableName = "Customers";
+        private const string OrderTableName = "Orders";
+
+        protected const string CustomerIdCol = "CustomerId";
+        protected const string OrderIdCol = "OrderId";
+        protected const string OrderForeignKey = "OrderCustomerId";
+
+        public void GivenCustomersTable()
         {
-            GivenTableWithPrimaryKey();
-            _provider.AddForeignKey(new ForeignKey("TestTwo", "TestId", "Test", "Id"));
+            _provider.AddTable(CustomersTableName,
+                               new Column(CustomerIdCol, DbType.Int32, ColumnProperty.PrimaryKeyWithIdentity),
+                               NameColumn);
         }
 
-        private void AddPrimaryKey()
+        public void GivenOrdersTableTable()
         {
-            _provider.AddPrimaryKey(TestTableName, IdColumnName);
+            _provider.AddTable(OrderTableName,
+                                new Column(OrderIdCol, DbType.Int32, ColumnProperty.PrimaryKeyWithIdentity),
+                                new Column(OrderForeignKey, DbType.Int32, ColumnProperty.NotNull));
         }
 
-        private void AddUniqueConstraint()
+        [SetUp]
+        public void CustomerSetup()
         {
-            _provider.AddUniqueConstraint("UN_Test_TestTwo", "TestTwo", "TestId");
+            GivenCustomersTable();
+            GivenOrdersTableTable();
         }
 
-        private void AddMultipleUniqueConstraint()
+        private string AddForeignKey()
         {
-            _provider.AddUniqueConstraint("UN_Test_TestTwo", "TestTwo", "Id", "TestId");
+            return _provider.AddForeignKey(new ForeignKey(OrderTableName, OrderForeignKey, CustomersTableName, CustomerIdCol)).Name;
         }
 
-        private void AddCheckConstraint()
+        private string AddPrimaryKey()
         {
-            _provider.AddCheckConstraint("CK_TestTwo_TestId", "TestTwo", "TestId>5");
+            return _provider.AddPrimaryKey(TestTableName, IdColumnName);
+        }
+
+        private string AddUniqueConstraint()
+        {
+            return _provider.AddUniqueConstraint(TestTableName, NameColumn.Name);
+        }
+
+        private string AddMultipleUniqueConstraint()
+        {
+            return _provider.AddUniqueConstraint(TestTableName, NameColumn.Name, BinColumn.Name);
+        }
+
+        private string AddCheckConstraint()
+        {
+            return _provider.AddCheckConstraint("CK_TestTwo_TestId", TestTableName, NumberColumn.Name + ">5");
         }
 
         [Test]
         public void CanAddPrimaryKey()
         {
-            AddPrimaryKey();
-            _provider.PrimaryKeyExists(TestTableName, "PK_" + TestTableName + "_" + IdColumnName);
+            var name = AddPrimaryKey();
+            _provider.PrimaryKeyExists(TestTableName, name).Should().BeTrue();
         }
 
 
@@ -56,8 +84,8 @@ namespace Migrator.Tests.ProvidersWithConstraints
         [Test]
         public void CanAddForeignKey()
         {
-            AddForeignKey();
-            Assert.IsTrue(_provider.ConstraintExists("TestTwo", "FK_Test_TestTwo"));
+            var name =  AddForeignKey();
+            _provider.ConstraintExists(OrderTableName, name).Should().BeTrue();
         }
 
         [Test]
