@@ -47,94 +47,18 @@ namespace Migrator.Framework
         public Logger Logger { get; private set; }
 
 
-        public virtual Column[] GetColumns(string table)
+        #region Columns
+
+        protected virtual void ChangeColumn(string table, string sqlColumn)
         {
-            var columns = new List<Column>();
-            using (IDataReader reader = ExecuteQuery("select COLUMN_NAME, IS_NULLABLE from INFORMATION_SCHEMA.COLUMNS where table_name = '{0}'", table))
-            {
-                while (reader.Read())
-                {
-                    var column = new Column(reader.GetString(0), DbType.String);
-                    string nullableStr = reader.GetString(1);
-                    bool isNullable = nullableStr == "YES";
-                    column.ColumnProperty |= isNullable ? ColumnProperty.Null : ColumnProperty.NotNull;
-
-                    columns.Add(column);
-                }
-            }
-
-            return columns.ToArray();
+            table = QuoteTableNameIfRequired(table);
+            ExecuteNonQuery(String.Format("ALTER TABLE {0} ALTER COLUMN {1}", table, sqlColumn));
         }
 
-        public Column GetColumn(string table, string columnName)
+        protected virtual void AddColumn(string table, string sqlColumn)
         {
-            return Array.Find(GetColumns(table), column => column.Name == columnName);
-        }
-
-        public virtual IEnumerable<string> GetTables()
-        {
-            var tables = new List<string>();
-            using (IDataReader reader = ExecuteQuery("SELECT table_name FROM information_schema.tables"))
-            {
-                while (reader.Read())
-                {
-                    tables.Add((string)reader[0]);
-                }
-            }
-            return tables.ToArray();
-        }
-
-        public virtual void RemoveForeignKey(string table, string name)
-        {
-            RemoveConstraint(table, name);
-        }
-
-        public virtual void RemoveConstraint(string table, string name)
-        {
-            if (TableExists(table) && ConstraintExists(table, name))
-            {
-                table = Dialect.TableNameNeedsQuote ? Dialect.Quote(table) : table;
-                name = Dialect.ConstraintNameNeedsQuote ? Dialect.Quote(name) : name;
-                ExecuteNonQuery("ALTER TABLE {0} DROP CONSTRAINT {1}", table, name);
-            }
-        }
-
-
-        public void AddTable(string name, params Column[] columns)
-        {
-            if (TableExists(name)) throw new TableAlreadyExistsException(name);
-
-            if (GetPrimaryKeys(columns).Count() > 1)
-                new InvalidOperationException("Compound primary keys aren't supported");
-
-
-            var columnProviders = new List<ColumnPropertiesMapper>(columns.Length);
-            foreach (Column column in columns)
-            {
-                ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(column);
-                columnProviders.Add(mapper);
-            }
-
-            string columnsAndIndexes = JoinColumnsAndIndexes(columnProviders);
-            AddTable(name, columnsAndIndexes);
-        }
-
-        public void DropTable(string name)
-        {
-            if (TableExists(name))
-                ExecuteNonQuery("DROP TABLE {0}", name);
-        }
-
-        public virtual void RenameTable(string oldName, string newName)
-        {
-            if (TableExists(newName))
-                throw new TableAlreadyExistsException(newName);
-
-            if (!TableExists(oldName))
-                throw new TableDoesntExistsException(oldName);
-
-            if (TableExists(oldName))
-                ExecuteNonQuery(String.Format("ALTER TABLE {0} RENAME TO {1}", oldName, newName));
+            table = QuoteTableNameIfRequired(table);
+            ExecuteNonQuery(String.Format("ALTER TABLE {0} ADD COLUMN {1}", table, sqlColumn));
         }
 
         public void RenameColumn(string tableName, string oldColumnName, string newColumnName)
@@ -187,6 +111,34 @@ namespace Migrator.Framework
             ChangeColumn(table, mapper.ColumnSql);
         }
 
+        public Column GetColumn(string table, string columnName)
+        {
+            return Array.Find(GetColumns(table), column => column.Name == columnName);
+        }
+
+        public virtual Column[] GetColumns(string table)
+        {
+            var columns = new List<Column>();
+            using (IDataReader reader = ExecuteQuery("select COLUMN_NAME, IS_NULLABLE from INFORMATION_SCHEMA.COLUMNS where table_name = '{0}'", table))
+            {
+                while (reader.Read())
+                {
+                    var column = new Column(reader.GetString(0), DbType.String);
+                    string nullableStr = reader.GetString(1);
+                    bool isNullable = nullableStr == "YES";
+                    column.ColumnProperty |= isNullable ? ColumnProperty.Null : ColumnProperty.NotNull;
+
+                    columns.Add(column);
+                }
+            }
+
+            return columns.ToArray();
+        }
+
+        #endregion
+
+        #region Tables
+
         public virtual bool TableExists(string table)
         {
             table = table.Trim('[', ']');
@@ -194,68 +146,68 @@ namespace Migrator.Framework
             return GetTables().Any(c => String.Equals(c, table, StringComparison.CurrentCultureIgnoreCase));
         }
 
-        public void SwitchDatabase(string databaseName)
+        public void AddTable(string name, params Column[] columns)
         {
-            Connection.ChangeDatabase(databaseName);
-        }
+            if (TableExists(name)) throw new TableAlreadyExistsException(name);
 
-        public abstract List<string> GetDatabases();
-
-        public bool DatabaseExists(string name)
-        {
-            return GetDatabases().Any(c => string.Equals(name, c, StringComparison.InvariantCultureIgnoreCase));
-        }
-
-        public void CreateDatabases(string databaseName)
-        {
-            ExecuteNonQuery("CREATE DATABASE {0}", databaseName);
-        }
-
-        public void DropDatabases(string databaseName)
-        {
-            ExecuteNonQuery("DROP DATABASE {0}", databaseName);
-        }
-
-        public bool IndexExists(string indexName, string tableName)
-        {
-            return
-                GetIndexes(tableName).Any(c => string.Equals(c, indexName, StringComparison.InvariantCultureIgnoreCase));
-        }
+            if (GetPrimaryKeys(columns).Count() > 1)
+                new InvalidOperationException("Compound primary keys aren't supported");
 
 
-        public string AddIndex(string table, params string[] columns)
-        {
-            var indexName = string.Format("IDX_{0}_{1}", table, string.Join("_ ", columns));
-
-            if (IndexExists(indexName, table))
-                throw new IndexAlreadyExistsException(table, indexName);
-
-            ExecuteNonQuery(String.Format("CREATE INDEX {0} ON {1} ({2}) ", indexName, table, string.Join(", ", columns)));
-
-            return indexName;
-        }
-
-        public List<string> GetIndexes(string tableName)
-        {
-            var indexes =
-                ExecuteStringQuery("SELECT Index_Name FROM INFORMATION_SCHEMA.Indexes WHERE Table_Name = '{0}'",
-                                   tableName);
-            return indexes;
-        }
-
-        public virtual void WipeDatabase(string databaseName)
-        {
-            Connection.ChangeDatabase(databaseName);
-
-            var tables = GetTables().ToList();
-  
-            foreach (var table in tables)
+            var columnProviders = new List<ColumnPropertiesMapper>(columns.Length);
+            foreach (Column column in columns)
             {
-                DropTable(table);
+                ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(column);
+                columnProviders.Add(mapper);
             }
+
+            string columnsAndIndexes = JoinColumnsAndIndexes(columnProviders);
+            AddTable(name, columnsAndIndexes);
         }
 
+        public void DropTable(string name)
+        {
+            if (TableExists(name))
+                ExecuteNonQuery("DROP TABLE {0}", name);
+        }
 
+        public virtual void RenameTable(string oldName, string newName)
+        {
+            if (TableExists(newName))
+                throw new TableAlreadyExistsException(newName);
+
+            if (!TableExists(oldName))
+                throw new TableDoesntExistsException(oldName);
+
+            if (TableExists(oldName))
+                ExecuteNonQuery(String.Format("ALTER TABLE {0} RENAME TO {1}", oldName, newName));
+        }
+
+        public virtual IEnumerable<string> GetTables()
+        {
+            var tables = new List<string>();
+            using (IDataReader reader = ExecuteQuery("SELECT table_name FROM information_schema.tables"))
+            {
+                while (reader.Read())
+                {
+                    tables.Add((string)reader[0]);
+                }
+            }
+            return tables.ToArray();
+        }
+
+        #endregion
+
+        #region ForeignKey
+
+        public virtual void RemoveForeignKey(string table, string name)
+        {
+            RemoveConstraint(table, name);
+        }
+
+        #endregion
+
+        #region Constraint
 
         public string AddPrimaryKey(string tableName, string columnName)
         {
@@ -342,97 +294,96 @@ namespace Migrator.Framework
             return ConstraintExists(table, name);
         }
 
-        public virtual int ExecuteNonQuery(string sql, params object[] args)
+        public virtual void RemoveConstraint(string table, string name)
         {
-            sql = string.Format(sql, args);
-
-            Logger.Trace(sql);
-
-            using (IDbCommand cmd = BuildCommand(sql))
+            if (TableExists(table) && ConstraintExists(table, name))
             {
-                return cmd.ExecuteNonQuery();
+                table = Dialect.TableNameNeedsQuote ? Dialect.Quote(table) : table;
+                name = Dialect.ConstraintNameNeedsQuote ? Dialect.Quote(name) : name;
+                ExecuteNonQuery("ALTER TABLE {0} DROP CONSTRAINT {1}", table, name);
             }
         }
 
-        /// <summary>
-        /// Execute an SQL query returning results.
-        /// </summary>
-        /// <param name="sql">The SQL command.</param>
-        /// <param name="args"> </param>
-        /// <returns>A data iterator, <see cref="System.Data.IDataReader">IDataReader</see>.</returns>
-        public virtual IDataReader ExecuteQuery(string sql, params object[] args)
-        {
-            sql = string.Format(sql, args);
+        #endregion
 
-            Logger.Trace(sql);
-            using (IDbCommand cmd = BuildCommand(sql))
+        #region Databases
+
+        public virtual void WipeDatabase(string databaseName)
+        {
+            Connection.ChangeDatabase(databaseName);
+
+            var tables = GetTables().ToList();
+
+            foreach (var table in tables)
             {
-                return cmd.ExecuteReader();
+                DropTable(table);
             }
         }
 
-        public List<string> ExecuteStringQuery(string sql, params object[] args)
+        public void SwitchDatabase(string databaseName)
         {
-            var values = new List<string>();
-
-            using (var reader = ExecuteQuery(sql, args))
-            {
-                while (reader.Read())
-                {
-                    var value = reader[0];
-
-                    if (value == null || value == DBNull.Value)
-                    {
-                        values.Add(null);
-                    }
-                    else
-                    {
-                        values.Add(value.ToString());
-                    }
-                }
-            }
-
-            return values;
+            Connection.ChangeDatabase(databaseName);
         }
 
-        public virtual object ExecuteScalar(string sql, params object[] args)
+        public bool DatabaseExists(string name)
         {
-            sql = string.Format(sql, args);
-
-            Logger.Trace(sql);
-            using (IDbCommand cmd = BuildCommand(sql))
-            {
-                try
-                {
-                    return cmd.ExecuteScalar();
-                }
-                catch
-                {
-                    Logger.Warn("Query failed: {0}", cmd.CommandText);
-                    throw;
-                }
-            }
+            return GetDatabases().Any(c => string.Equals(name, c, StringComparison.InvariantCultureIgnoreCase));
         }
 
-        public virtual IDataReader Select(string what, string from, string where = "1=1")
+        public void CreateDatabases(string databaseName)
         {
-            return ExecuteQuery("SELECT {0} FROM {1} WHERE {2}", what, from, where);
+            ExecuteNonQuery("CREATE DATABASE {0}", databaseName);
         }
 
-        public virtual object SelectScalar(string what, string from, string where = "1=1")
+        public void DropDatabases(string databaseName)
         {
-            return ExecuteScalar("SELECT {0} FROM {1} WHERE {2}", what, from, where);
+            ExecuteNonQuery("DROP DATABASE {0}", databaseName);
         }
 
+        public abstract List<string> GetDatabases();
+
+        #endregion
+
+        #region Indexes
+
+        public string AddIndex(string table, params string[] columns)
+        {
+            var indexName = string.Format("IDX_{0}_{1}", table, string.Join("_ ", columns));
+
+            if (IndexExists(indexName, table))
+                throw new IndexAlreadyExistsException(table, indexName);
+
+            ExecuteNonQuery(String.Format("CREATE INDEX {0} ON {1} ({2}) ", indexName, table, string.Join(", ", columns)));
+
+            return indexName;
+        }
+
+        public List<string> GetIndexes(string tableName)
+        {
+            var indexes =
+                ExecuteStringQuery("SELECT Index_Name FROM INFORMATION_SCHEMA.Indexes WHERE Table_Name = '{0}'",
+                                   tableName);
+            return indexes;
+        }
+
+        public bool IndexExists(string indexName, string tableName)
+        {
+            return
+                GetIndexes(tableName).Any(c => string.Equals(c, indexName, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        #endregion
+
+        #region Execute
 
         public virtual int Update(string table, string[] columns, string[] values, string where = null)
         {
             string namesAndValues = JoinColumnsAndValues(columns, values);
 
             string query = "UPDATE {0} SET {1}";
-            if (!String.IsNullOrEmpty(where))
+            if (!String.IsNullOrEmpty(@where))
             {
-                query += " WHERE " + where;
+                query += " WHERE " + @where;
             }
 
             return ExecuteNonQuery(String.Format(query, table, namesAndValues));
@@ -499,11 +450,10 @@ namespace Migrator.Framework
         {
             if (null == columns || null == values)
             {
-                return ExecuteNonQuery(String.Format("DELETE FROM {0}", table));
+                return ExecuteNonQuery("DELETE FROM {0}", table);
             }
             return
-                ExecuteNonQuery(String.Format("DELETE FROM {0} WHERE ({1})", table,
-                                              JoinColumnsAndValues(columns, values)));
+                ExecuteNonQuery("DELETE FROM {0} WHERE ({1})", table,JoinColumnsAndValues(columns, values));
         }
 
         public int DeleteData(string table, string wherecolumn, string wherevalue)
@@ -513,10 +463,94 @@ namespace Migrator.Framework
                 return DeleteData(table);
             }
 
-            return
-                ExecuteNonQuery(String.Format("DELETE FROM {0} WHERE {1} = {2}", table, wherecolumn,
-                                              QuoteValues(wherevalue)));
+            return ExecuteNonQuery("DELETE FROM {0} WHERE {1} = {2}", table, wherecolumn, QuoteValues(wherevalue));
         }
+
+        public IDataReader Select(string what, string from, string where = "1=1")
+        {
+            return ExecuteQuery("SELECT {0} FROM {1} WHERE {2}", what, @from, @where);
+        }
+
+        public object SelectScalar(string what, string from, string where = "1=1")
+        {
+            return ExecuteScalar("SELECT {0} FROM {1} WHERE {2}", what, @from, @where);
+        }
+
+        /// <summary>
+        /// Execute an SQL query returning results.
+        /// </summary>
+        /// <param name="sql">The SQL command.</param>
+        /// <param name="args"> </param>
+        /// <returns>A data iterator, <see cref="System.Data.IDataReader">IDataReader</see>.</returns>
+        public IDataReader ExecuteQuery(string sql, params object[] args)
+        {
+            sql = string.Format(sql, args);
+
+            Logger.Trace(sql);
+            using (IDbCommand cmd = BuildCommand(sql))
+            {
+                return cmd.ExecuteReader();
+            }
+        }
+
+        public List<string> ExecuteStringQuery(string sql, params object[] args)
+        {
+            var values = new List<string>();
+
+            using (var reader = ExecuteQuery(sql, args))
+            {
+                while (reader.Read())
+                {
+                    var value = reader[0];
+
+                    if (value == null || value == DBNull.Value)
+                    {
+                        values.Add(null);
+                    }
+                    else
+                    {
+                        values.Add(value.ToString());
+                    }
+                }
+            }
+
+            return values;
+        }
+
+        public virtual object ExecuteScalar(string sql, params object[] args)
+        {
+            sql = string.Format(sql, args);
+
+            Logger.Trace(sql);
+            using (IDbCommand cmd = BuildCommand(sql))
+            {
+                try
+                {
+                    return cmd.ExecuteScalar();
+                }
+                catch
+                {
+                    Logger.Warn("Query failed: {0}", cmd.CommandText);
+                    throw;
+                }
+            }
+        }
+
+        public virtual int ExecuteNonQuery(string sql, params object[] args)
+        {
+            sql = string.Format(sql, args);
+
+            Logger.Trace(sql);
+
+            using (IDbCommand cmd = BuildCommand(sql))
+            {
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
+        #endregion
+
+        #region Transaction
 
         /// <summary>
         /// Starts a transaction. Called by the migration mediator.
@@ -568,10 +602,12 @@ namespace Migrator.Framework
             _transaction = null;
         }
 
+        #endregion
+
         /// <summary>
         /// The list of Migrations currently applied to the database.
         /// </summary>
-        public virtual List<long> AppliedMigrations
+        public List<long> AppliedMigrations
         {
             get
             {
@@ -610,7 +646,7 @@ namespace Migrator.Framework
         public void MigrationApplied(long version)
         {
             CreateSchemaInfoTable();
-            Insert("SchemaInfo", new string[] { "Version" }, new[] { version.ToString() });
+            Insert("SchemaInfo", new[] { "Version" }, new[] { version.ToString() });
             _appliedMigrations.Add(version);
         }
 
@@ -676,18 +712,6 @@ namespace Migrator.Framework
         private IEnumerable<Column> GetPrimaryKeys(IEnumerable<Column> columns)
         {
             return columns.Where(c => c.IsPrimaryKey);
-        }
-
-        protected virtual void AddColumn(string table, string sqlColumn)
-        {
-            table = QuoteTableNameIfRequired(table);
-            ExecuteNonQuery(String.Format("ALTER TABLE {0} ADD COLUMN {1}", table, sqlColumn));
-        }
-
-        protected virtual void ChangeColumn(string table, string sqlColumn)
-        {
-            table = QuoteTableNameIfRequired(table);
-            ExecuteNonQuery(String.Format("ALTER TABLE {0} ALTER COLUMN {1}", table, sqlColumn));
         }
 
         private string JoinColumnsAndIndexes(IEnumerable<ColumnPropertiesMapper> columns)
