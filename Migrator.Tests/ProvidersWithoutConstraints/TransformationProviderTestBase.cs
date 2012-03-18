@@ -13,7 +13,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
 {
     public abstract class TransformationProviderTestBase<TProvider> : LoggingTest where TProvider : TransformationProviderBase
     {
-        private const string TEST_DB_NAME = "MigUnitTest";
+        protected const string TEST_DB_NAME = "MigUnitTest";
 
         protected abstract TProvider Provider();
 

@@ -71,7 +71,6 @@ namespace Migrator.Tests.ProvidersWithConstraints
         public void AddUniqueColumn()
         {
             _provider.AddColumn(TestTableName, new Column("Test", DbType.String, 50, ColumnProperty.Unique));
-            _provider.GetColumn(TestTableName, "Test").ColumnProperty.Should().Be(ColumnProperty.Unique);
         }
 
 
