@@ -1,16 +1,3 @@
-#region License
-
-//The contents of this file are subject to the Mozilla Public License
-//Version 1.1 (the "License"); you may not use this file except in
-//compliance with the License. You may obtain a copy of the License at
-//http://www.mozilla.org/MPL/
-//Software distributed under the License is distributed on an "AS IS"
-//basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
-//License for the specific language governing rights and limitations
-//under the License.
-
-#endregion
-
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -20,15 +7,15 @@ using Migrator.Framework.Loggers;
 namespace Migrator
 {
     /// <summary>
-    /// Migrations mediator.
+    ///   Migrations mediator.
     /// </summary>
     public class Migrator
     {
-        readonly MigrationLoader _migrationLoader;
-        readonly TransformationProviderBase _provider;
+        private readonly ILogger _logger = new Logger(false);
+        private readonly MigrationLoader _migrationLoader;
+        private readonly TransformationProviderBase _provider;
 
         protected bool _dryrun;
-        ILogger _logger = new Logger(false);
 
 
         public Migrator(TransformationProviderBase provider, Assembly migrationAssembly = null)
@@ -43,7 +30,7 @@ namespace Migrator
         }
 
         /// <summary>
-        /// Returns registered migration <see cref="System.Type">types</see>.
+        ///   Returns registered migration <see cref="System.Type">types</see> .
         /// </summary>
         public List<Type> MigrationsTypes
         {
@@ -51,7 +38,7 @@ namespace Migrator
         }
 
         /// <summary>
-        /// Returns the current migrations applied to the database.
+        ///   Returns the current migrations applied to the database.
         /// </summary>
         public List<long> AppliedMigrations
         {
@@ -65,8 +52,7 @@ namespace Migrator
         }
 
         /// <summary>
-        /// Run all migrations up to the latest.  Make no changes to database if
-        /// dryrun is true.
+        ///   Run all migrations up to the latest. Make no changes to database if dryrun is true.
         /// </summary>
         public void MigrateToLastVersion()
         {
@@ -74,16 +60,9 @@ namespace Migrator
         }
 
         /// <summary>
-        /// Migrate the database to a specific version.
-        /// Runs all migration between the actual version and the
-        /// specified version.
-        /// If <c>version</c> is greater then the current version,
-        /// the <c>Up()</c> method will be invoked.
-        /// If <c>version</c> lower then the current version,
-        /// the <c>Down()</c> method of previous migration will be invoked.
-        /// If <c>dryrun</c> is set, don't write any changes to the database.
+        ///   Migrate the database to a specific version. Runs all migration between the actual version and the specified version. If <c>version</c> is greater then the current version, the <c>Up()</c> method will be invoked. If <c>version</c> lower then the current version, the <c>Down()</c> method of previous migration will be invoked. If <c>dryrun</c> is set, don't write any changes to the database.
         /// </summary>
-        /// <param name="version">The version that must became the current one</param>
+        /// <param name="version"> The version that must became the current one </param>
         public void MigrateTo(long version)
         {
             if (_migrationLoader.MigrationsTypes.Count == 0)

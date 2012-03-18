@@ -1,6 +1,4 @@
-﻿// ReSharper disable InconsistentNaming
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using FluentAssertions;
@@ -11,13 +9,10 @@ using NUnit.Framework;
 
 namespace Migrator.Tests.ProvidersWithoutConstraints
 {
-    public abstract class TransformationProviderTestBase<TProvider> : LoggingTest where TProvider : TransformationProviderBase
+    public abstract class TransformationProviderTestBase<TProvider> : LoggingTest
+        where TProvider : TransformationProviderBase
     {
         protected const string TEST_DB_NAME = "MigUnitTest";
-
-        protected abstract TProvider Provider();
-
-        protected TProvider _provider;
 
         protected const string TestTableName = "TestTable";
         protected const string TestTableWithIdName = "TestTableWithId";
@@ -25,13 +20,17 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
 
         protected const string IdColumnName = "Id";
 
+        protected readonly Column BigStringColumb = new Column("BigStringColumb", DbType.String, 50000,
+                                                               ColumnProperty.Null);
 
-        protected readonly Column TitleColumn = new Column("TitleColumn", DbType.String, 100, ColumnProperty.Null);
-        protected readonly Column NumberColumn = new Column("NumberColumn", DbType.Int32, ColumnProperty.Null);
-        protected readonly Column NameColumn = new Column("NameColumn", DbType.String, 50, ColumnProperty.Null);
+
         protected readonly Column BinColumn = new Column("BinColumn", DbType.Binary, ColumnProperty.Null);
         protected readonly Column BoolColumn = new Column("BoolColumn", DbType.Boolean, ColumnProperty.Null);
-        protected readonly Column BigStringColumb = new Column("BigStringColumb", DbType.String, 50000, ColumnProperty.Null);
+        protected readonly Column NameColumn = new Column("NameColumn", DbType.String, 50, ColumnProperty.Null);
+        protected readonly Column NumberColumn = new Column("NumberColumn", DbType.Int32, ColumnProperty.Null);
+        protected readonly Column TitleColumn = new Column("TitleColumn", DbType.String, 100, ColumnProperty.Null);
+        protected TProvider _provider;
+        protected abstract TProvider Provider();
 
         [SetUp]
         public void TransformationProviderBaseSetup()
@@ -68,7 +67,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         {
             _provider.AddTable(TestTableName,
                                new Column(IdColumnName, DbType.Int32, ColumnProperty.NotNull),
-                              NumberColumn,
+                               NumberColumn,
                                TitleColumn,
                                NameColumn,
                                BinColumn,
@@ -151,10 +150,10 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         {
             GivenTableWithPrimaryKey();
 
-            Column[] cols = _provider.GetColumns(TestTableName);
+            var cols = _provider.GetColumns(TestTableName);
             cols.Should().NotBeEmpty();
 
-            foreach (Column column in cols)
+            foreach (var column in cols)
             {
                 if (column.Name == IdColumnName)
                 {
@@ -216,7 +215,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         }
 
         [Test]
-        [ExpectedException(typeof(ColumnAlreadyExistsException))]
+        [ExpectedException(typeof (ColumnAlreadyExistsException))]
         public void RenameColumnToExistingColumn()
         {
             _provider.RenameColumn(TestTableName, TitleColumn.Name, NameColumn.Name);
@@ -279,8 +278,8 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         public void CanGetNullableFromProvider()
         {
             _provider.AddColumn(TestTableName, new Column("NullableColumn", DbType.String, 30, ColumnProperty.Null));
-            Column[] columns = _provider.GetColumns(TestTableName);
-            foreach (Column column in columns)
+            var columns = _provider.GetColumns(TestTableName);
+            foreach (var column in columns)
             {
                 if (column.Name == "NullableColumn")
                 {
@@ -355,8 +354,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         }
 
         /// <summary>
-        /// Reproduce bug reported by Luke Melia & Daniel Berlinger :
-        /// http://macournoyer.wordpress.com/2006/10/15/migrate-nant-task/#comment-113
+        ///   Reproduce bug reported by Luke Melia & Daniel Berlinger : http://macournoyer.wordpress.com/2006/10/15/migrate-nant-task/#comment-113
         /// </summary>
         [Test]
         public void CommitTwice()
@@ -369,8 +367,8 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void InsertData()
         {
-            _provider.Insert(TestTableName, new[] { IdColumnName, NameColumn.Name }, new[] { "1", "Name1" });
-            _provider.Insert(TestTableName, new[] { IdColumnName, NameColumn.Name }, new[] { "2", "Name2" });
+            _provider.Insert(TestTableName, new[] {IdColumnName, NameColumn.Name}, new[] {"1", "Name1"});
+            _provider.Insert(TestTableName, new[] {IdColumnName, NameColumn.Name}, new[] {"2", "Name2"});
 
 
             var data = ReadStringData(TestTableName, NameColumn.Name);
@@ -383,8 +381,8 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void CanInsertNullData()
         {
-            _provider.Insert(TestTableName, new[] { IdColumnName, NameColumn.Name }, new[] { "1", "foo" });
-            _provider.Insert(TestTableName, new[] { IdColumnName, NameColumn.Name }, new[] { "2", null });
+            _provider.Insert(TestTableName, new[] {IdColumnName, NameColumn.Name}, new[] {"1", "foo"});
+            _provider.Insert(TestTableName, new[] {IdColumnName, NameColumn.Name}, new[] {"2", null});
 
 
             var data = ReadStringData(TestTableName, NameColumn.Name);
@@ -397,7 +395,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void CanInsertDataWithSingleQuotes()
         {
-            _provider.Insert(TestTableName, new[] { IdColumnName, TitleColumn.Name }, new[] { "1", "Muad'Dib" });
+            _provider.Insert(TestTableName, new[] {IdColumnName, TitleColumn.Name}, new[] {"1", "Muad'Dib"});
 
             var data = ReadStringData(TestTableName, TitleColumn.Name);
 
@@ -421,7 +419,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         public void DeleteDataWithArrays()
         {
             InsertData();
-            _provider.DeleteData(TestTableName, new[] { IdColumnName }, new[] { "1" });
+            _provider.DeleteData(TestTableName, new[] {IdColumnName}, new[] {"1"});
 
             var data = ReadStringData(TestTableName, NameColumn.Name);
 
@@ -434,7 +432,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         {
             InsertData();
 
-            _provider.Update(TestTableName, new[] { IdColumnName }, new[] { "3" });
+            _provider.Update(TestTableName, new[] {IdColumnName}, new[] {"3"});
 
             var data = ReadIntData(TestTableName, IdColumnName);
 
@@ -447,7 +445,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         {
             InsertData();
 
-            _provider.Update(TestTableName, new[] { IdColumnName, NameColumn.Name }, new[] { "3", null });
+            _provider.Update(TestTableName, new[] {IdColumnName, NameColumn.Name}, new[] {"3", null});
 
             var ids = ReadIntData(TestTableName, IdColumnName);
             var names = ReadStringData(TestTableName, NameColumn.Name);
@@ -457,7 +455,6 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
 
             names.Should().HaveCount(2);
             names.Should().OnlyContain(c => c == null);
-
         }
 
         [Test]
@@ -465,7 +462,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         {
             InsertData();
 
-            _provider.Update(TestTableName, new[] { IdColumnName }, new[] { "3" }, IdColumnName + "='1'");
+            _provider.Update(TestTableName, new[] {IdColumnName}, new[] {"3"}, IdColumnName + "='1'");
 
             var data = ReadIntData(TestTableName, IdColumnName);
 
@@ -479,11 +476,11 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         {
             var values = new List<string>();
 
-            using (var reader = _provider.Select(column, tableName))
+            using (IDataReader reader = _provider.Select(column, tableName))
             {
                 while (reader.Read())
                 {
-                    var value = reader[0];
+                    object value = reader[0];
 
                     if (value == null || value == DBNull.Value)
                     {
@@ -503,11 +500,11 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         {
             var values = new List<int>();
 
-            using (var reader = _provider.Select(column, tableName))
+            using (IDataReader reader = _provider.Select(column, tableName))
             {
                 while (reader.Read())
                 {
-                    var value = reader[0];
+                    object value = reader[0];
 
                     if (value == null || value == DBNull.Value)
                     {
@@ -522,6 +519,5 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
 
             return values;
         }
-
     }
 }

@@ -6,13 +6,12 @@ using Migrator.Framework;
 namespace Migrator
 {
     /// <summary>
-    /// Handles inspecting code to find all of the Migrations in assemblies and reading
-    /// other metadata such as the last revision, etc.
+    ///   Handles inspecting code to find all of the Migrations in assemblies and reading other metadata such as the last revision, etc.
     /// </summary>
     public class MigrationLoader
     {
-        readonly List<Type> _migrationsTypes = new List<Type>();
-        readonly TransformationProviderBase _provider;
+        private readonly List<Type> _migrationsTypes = new List<Type>();
+        private readonly TransformationProviderBase _provider;
 
         public MigrationLoader(TransformationProviderBase provider, Assembly migrationAssembly)
         {
@@ -21,15 +20,15 @@ namespace Migrator
 
 
             provider.Logger.Trace("Loaded migrations:");
-            foreach (Type t in _migrationsTypes)
+            foreach (var t in _migrationsTypes)
             {
-                provider.Logger.Trace("{0} {1}", GetMigrationVersion(t).ToString().PadLeft(5), StringUtils.ToHumanName(t.Name));
+                provider.Logger.Trace("{0} {1}", GetMigrationVersion(t).ToString().PadLeft(5),
+                                      StringUtils.ToHumanName(t.Name));
             }
-
         }
 
         /// <summary>
-        /// Returns registered migration <see cref="System.Type">types</see>.
+        ///   Returns registered migration <see cref="System.Type">types</see> .
         /// </summary>
         public List<Type> MigrationsTypes
         {
@@ -37,7 +36,7 @@ namespace Migrator
         }
 
         /// <summary>
-        /// Returns the last version of the migrations.
+        ///   Returns the last version of the migrations.
         /// </summary>
         public long LastVersion
         {
@@ -56,13 +55,13 @@ namespace Migrator
         }
 
         /// <summary>
-        /// Check for duplicated version in migrations.
+        ///   Check for duplicated version in migrations.
         /// </summary>
         /// <exception cref="CheckForDuplicatedVersion">CheckForDuplicatedVersion</exception>
         public void CheckForDuplicatedVersion()
         {
             var versions = new List<long>();
-            foreach (Type t in _migrationsTypes)
+            foreach (var t in _migrationsTypes)
             {
                 long version = GetMigrationVersion(t);
 
@@ -74,19 +73,19 @@ namespace Migrator
         }
 
         /// <summary>
-        /// Collect migrations in one <c>Assembly</c>.
+        ///   Collect migrations in one <c>Assembly</c> .
         /// </summary>
-        /// <param name="asm">The <c>Assembly</c> to browse.</param>
-        /// <returns>The migrations collection</returns>
+        /// <param name="asm"> The <c>Assembly</c> to browse. </param>
+        /// <returns> The migrations collection </returns>
         public static List<Type> GetMigrationTypes(Assembly asm)
         {
             var migrations = new List<Type>();
-            foreach (Type t in asm.GetExportedTypes())
+            foreach (var t in asm.GetExportedTypes())
             {
-                var attrib =
-                    (MigrationAttribute)Attribute.GetCustomAttribute(t, typeof(MigrationAttribute));
+                MigrationAttribute attrib =
+                    (MigrationAttribute) Attribute.GetCustomAttribute(t, typeof (MigrationAttribute));
 
-                if (attrib != null && typeof(IMigration).IsAssignableFrom(t) && !attrib.Ignore)
+                if (attrib != null && typeof (IMigration).IsAssignableFrom(t) && !attrib.Ignore)
                 {
                     migrations.Add(t);
                 }
@@ -97,15 +96,14 @@ namespace Migrator
         }
 
         /// <summary>
-        /// Returns the version of the migration
-        /// <see cref="MigrationAttribute">MigrationAttribute</see>.
+        ///   Returns the version of the migration <see cref="MigrationAttribute">MigrationAttribute</see> .
         /// </summary>
-        /// <param name="t">Migration type.</param>
-        /// <returns>Version number sepcified in the attribute</returns>
+        /// <param name="t"> Migration type. </param>
+        /// <returns> Version number sepcified in the attribute </returns>
         public static long GetMigrationVersion(Type t)
         {
-            var attrib = (MigrationAttribute)
-                         Attribute.GetCustomAttribute(t, typeof(MigrationAttribute));
+            MigrationAttribute attrib = (MigrationAttribute)
+                                        Attribute.GetCustomAttribute(t, typeof (MigrationAttribute));
 
             return attrib.Version;
         }
@@ -119,11 +117,11 @@ namespace Migrator
 
         public IMigration GetMigration(long version)
         {
-            foreach (Type t in _migrationsTypes)
+            foreach (var t in _migrationsTypes)
             {
                 if (GetMigrationVersion(t) == version)
                 {
-                    var migration = (IMigration)Activator.CreateInstance(t);
+                    IMigration migration = (IMigration) Activator.CreateInstance(t);
                     migration.Database = _provider;
                     return migration;
                 }

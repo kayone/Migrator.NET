@@ -4,13 +4,11 @@ using System.Data;
 using System.Data.SQLite;
 using System.Linq;
 using Migrator.Framework;
-using Migrator.Framework.Exceptions;
-
 
 namespace Migrator.Providers.SQLite
 {
     /// <summary>
-    /// Summary description for SQLiteTransformationProvider.
+    ///   Summary description for SQLiteTransformationProvider.
     /// </summary>
     public class SQLiteTransformationProvider : TransformationProviderBase
     {
@@ -22,14 +20,19 @@ namespace Migrator.Providers.SQLite
             Connection.Open();
         }
 
+        public override Dialect Dialect
+        {
+            get { return new SQLiteDialect(); }
+        }
+
         protected override void DoRemoveColumn(string table, string column)
         {
-            string[] origColDefs = GetColumnDefs(table);
+            var origColDefs = GetColumnDefs(table);
 
-            string[] newColDefs = origColDefs.Where(origdef => !ColumnMatch(column, origdef)).ToArray();
+            var newColDefs = origColDefs.Where(origdef => !ColumnMatch(column, origdef)).ToArray();
             string colDefsSql = String.Join(",", newColDefs);
 
-            string[] colNames = ParseSqlForColumnNames(newColDefs);
+            var colNames = ParseSqlForColumnNames(newColDefs);
             string colNamesSql = String.Join(",", colNames);
 
             AddTable(table + "_temp", colDefsSql);
@@ -40,7 +43,7 @@ namespace Migrator.Providers.SQLite
 
         protected override void DoRenameColumn(string tableName, string oldColumnName, string newColumnName)
         {
-            string[] columnDefs = GetColumnDefs(tableName);
+            var columnDefs = GetColumnDefs(tableName);
             string columnDef = Array.Find(columnDefs, col => ColumnMatch(oldColumnName, col));
 
             string newColumnDef = columnDef.Replace(oldColumnName, newColumnName);
@@ -48,7 +51,6 @@ namespace Migrator.Providers.SQLite
             AddColumn(tableName, newColumnDef);
             ExecuteQuery(String.Format("UPDATE {0} SET {1}={2}", tableName, newColumnName, oldColumnName));
             RemoveColumn(tableName, oldColumnName);
-
         }
 
         public override void ChangeColumn(string table, Column column)
@@ -72,35 +74,33 @@ namespace Migrator.Providers.SQLite
         }
 
 
-
         public override IEnumerable<string> GetTables()
         {
             var tables = new List<string>();
 
-            using (IDataReader reader = ExecuteQuery("SELECT name FROM sqlite_master WHERE type='table' AND name <> 'sqlite_sequence' ORDER BY name"))
+            using (
+                IDataReader reader =
+                    ExecuteQuery(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name <> 'sqlite_sequence' ORDER BY name")
+                )
             {
                 while (reader.Read())
                 {
-                    tables.Add((string)reader[0]);
+                    tables.Add((string) reader[0]);
                 }
             }
 
             return tables;
         }
 
-        public override Dialect Dialect
-        {
-            get { return new SQLiteDialect(); }
-        }
-
         public override Column[] GetColumns(string table)
         {
             var columns = new List<Column>();
-            foreach (string columnDef in GetColumnDefs(table))
+            foreach (var columnDef in GetColumnDefs(table))
             {
                 string name = ExtractNameFromColumnDef(columnDef);
                 // FIXME: Need to get the real type information
-                var column = new Column(name, DbType.String);
+                Column column = new Column(name, DbType.String);
                 bool isNullable = IsNullable(columnDef);
                 column.ColumnProperty |= isNullable ? ColumnProperty.Null : ColumnProperty.NotNull;
                 columns.Add(column);
@@ -111,11 +111,14 @@ namespace Migrator.Providers.SQLite
         public string GetSqlDefString(string table)
         {
             string sqldef = null;
-            using (IDataReader reader = ExecuteQuery(String.Format("SELECT sql FROM sqlite_master WHERE type='table' AND name='{0}'", table)))
+            using (
+                IDataReader reader =
+                    ExecuteQuery(String.Format("SELECT sql FROM sqlite_master WHERE type='table' AND name='{0}'", table))
+                )
             {
                 if (reader.Read())
                 {
-                    sqldef = (string)reader[0];
+                    sqldef = (string) reader[0];
                 }
             }
             return sqldef;
@@ -132,11 +135,11 @@ namespace Migrator.Providers.SQLite
         }
 
         /// <summary>
-        /// Turn something like 'columnName INTEGER NOT NULL' into just 'columnName'
+        ///   Turn something like 'columnName INTEGER NOT NULL' into just 'columnName'
         /// </summary>
         public string[] ParseSqlForColumnNames(string sqldef)
         {
-            string[] parts = ParseSqlColumnDefs(sqldef);
+            var parts = ParseSqlColumnDefs(sqldef);
             return ParseSqlForColumnNames(parts);
         }
 
@@ -153,10 +156,10 @@ namespace Migrator.Providers.SQLite
         }
 
         /// <summary>
-        /// Name is the first value before the space.
+        ///   Name is the first value before the space.
         /// </summary>
-        /// <param name="columnDef"></param>
-        /// <returns></returns>
+        /// <param name="columnDef"> </param>
+        /// <returns> </returns>
         public string ExtractNameFromColumnDef(string columnDef)
         {
             int idx = columnDef.IndexOf(" ");
@@ -186,7 +189,7 @@ namespace Migrator.Providers.SQLite
             sqldef = sqldef.Substring(0, end);
             sqldef = sqldef.Substring(start + 1);
 
-            string[] cols = sqldef.Split(new[] { ',' });
+            var cols = sqldef.Split(new[] {','});
             for (int i = 0; i < cols.Length; i++)
             {
                 cols[i] = cols[i].Trim();

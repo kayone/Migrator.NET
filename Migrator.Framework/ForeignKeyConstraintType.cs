@@ -1,11 +1,11 @@
 namespace Migrator.Framework
 {
-	public enum ForeignKeyConstraintType
-	{
-		Cascade,
-		SetNull,
-		NoAction,
-		Restrict,
-		SetDefault
-	}
+    public enum ForeignKeyConstraintType
+    {
+        Cascade,
+        SetNull,
+        NoAction,
+        Restrict,
+        SetDefault
+    }
 }

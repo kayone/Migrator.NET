@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using Migrator.Framework;
-using Migrator.Framework.Exceptions;
 using MySql.Data.MySqlClient;
 
 namespace Migrator.Providers.Mysql
 {
     /// <summary>
-    /// Summary description for MySqlTransformationProvider.
+    ///   Summary description for MySqlTransformationProvider.
     /// </summary>
     public class MySqlTransformationProvider : TransformationProviderBase
     {
@@ -59,7 +58,7 @@ namespace Migrator.Providers.Mysql
             {
                 while (reader.Read())
                 {
-                    var column = new Column(reader.GetString(0), DbType.String);
+                    Column column = new Column(reader.GetString(0), DbType.String);
                     string nullableStr = reader.GetString(2);
                     bool isNullable = nullableStr == "YES";
                     column.ColumnProperty |= isNullable ? ColumnProperty.Null : ColumnProperty.NotNull;
@@ -78,7 +77,7 @@ namespace Migrator.Providers.Mysql
             {
                 while (reader.Read())
                 {
-                    tables.Add((string)reader[0]);
+                    tables.Add((string) reader[0]);
                 }
             }
 
@@ -94,7 +93,9 @@ namespace Migrator.Providers.Mysql
         protected override void DoRenameColumn(string tableName, string oldColumnName, string newColumnName)
         {
             string definition = null;
-            using (IDataReader reader = ExecuteQuery(String.Format("SHOW COLUMNS FROM {0} WHERE Field='{1}'", tableName, oldColumnName)))
+            using (
+                IDataReader reader =
+                    ExecuteQuery(String.Format("SHOW COLUMNS FROM {0} WHERE Field='{1}'", tableName, oldColumnName)))
             {
                 if (reader.Read())
                 {
@@ -127,7 +128,8 @@ namespace Migrator.Providers.Mysql
 
             if (!String.IsNullOrEmpty(definition))
             {
-                ExecuteNonQuery(String.Format("ALTER TABLE {0} CHANGE {1} {2} {3}", tableName, oldColumnName, newColumnName, definition));
+                ExecuteNonQuery(String.Format("ALTER TABLE {0} CHANGE {1} {2} {3}", tableName, oldColumnName,
+                                              newColumnName, definition));
             }
         }
 

@@ -3,30 +3,30 @@ using System.Data.SqlClient;
 
 namespace Migrator.Providers.Utility
 {
-	public static class SqlServerUtility
-	{
-		public static void RemoveAllTablesFromDefaultDatabase(string connectionString)
-		{
-			using (var connection = new SqlConnection(connectionString))
-			{
-				connection.Open();
-				RemoveAllForeignKeys(connection);
-				DropAllTables(connection);
-				connection.Close();
-			}
-		}
+    public static class SqlServerUtility
+    {
+        public static void RemoveAllTablesFromDefaultDatabase(string connectionString)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                RemoveAllForeignKeys(connection);
+                DropAllTables(connection);
+                connection.Close();
+            }
+        }
 
-		static void DropAllTables(SqlConnection connection)
-		{
-			ExecuteForEachTable(connection, "DROP TABLE ?");
-		}
+        private static void DropAllTables(SqlConnection connection)
+        {
+            ExecuteForEachTable(connection, "DROP TABLE ?");
+        }
 
-		static void RemoveAllForeignKeys(SqlConnection connection)
-		{
-			using (
-				var dropConstraintsCommand =
-					new SqlCommand(
-						@"DECLARE @Sql NVARCHAR(500) DECLARE @Cursor CURSOR
+        private static void RemoveAllForeignKeys(SqlConnection connection)
+        {
+            using (
+                SqlCommand dropConstraintsCommand =
+                    new SqlCommand(
+                        @"DECLARE @Sql NVARCHAR(500) DECLARE @Cursor CURSOR
 
 SET @Cursor = CURSOR FAST_FORWARD FOR
 
@@ -49,21 +49,21 @@ FETCH NEXT FROM @Cursor INTO @Sql
 END
 
 CLOSE @Cursor DEALLOCATE @Cursor",
-						connection))
-			{
-				dropConstraintsCommand.CommandType = CommandType.Text;
-				dropConstraintsCommand.ExecuteNonQuery();
-			}
-		}
+                        connection))
+            {
+                dropConstraintsCommand.CommandType = CommandType.Text;
+                dropConstraintsCommand.ExecuteNonQuery();
+            }
+        }
 
-		static void ExecuteForEachTable(SqlConnection connection, string command)
-		{
-			using (var forEachCommand = new SqlCommand("sp_MSforeachtable", connection))
-			{
-				forEachCommand.CommandType = CommandType.StoredProcedure;
-				forEachCommand.Parameters.AddWithValue("@command1", command);
-				forEachCommand.ExecuteNonQuery();
-			}
-		}
-	}
+        private static void ExecuteForEachTable(SqlConnection connection, string command)
+        {
+            using (SqlCommand forEachCommand = new SqlCommand("sp_MSforeachtable", connection))
+            {
+                forEachCommand.CommandType = CommandType.StoredProcedure;
+                forEachCommand.Parameters.AddWithValue("@command1", command);
+                forEachCommand.ExecuteNonQuery();
+            }
+        }
+    }
 }

@@ -1,16 +1,3 @@
-#region License
-
-//The contents of this file are subject to the Mozilla Public License
-//Version 1.1 (the "License"); you may not use this file except in
-//compliance with the License. You may obtain a copy of the License at
-//http://www.mozilla.org/MPL/
-//Software distributed under the License is distributed on an "AS IS"
-//basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
-//License for the specific language governing rights and limitations
-//under the License.
-
-#endregion
-
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -22,8 +9,7 @@ using NLog;
 namespace Migrator.Framework
 {
     /// <summary>
-    /// Base class for every transformation providers.
-    /// A 'transformation' is an operation that modifies the database.
+    ///   Base class for every transformation providers. A 'transformation' is an operation that modifies the database.
     /// </summary>
     public abstract class TransformationProviderBase
     {
@@ -31,7 +17,6 @@ namespace Migrator.Framework
 
         private readonly ForeignKeyConstraintMapper _constraintMapper = new ForeignKeyConstraintMapper();
         private List<long> _appliedMigrations;
-        public IDbConnection Connection { get; protected set; }
 
 
         private IDbTransaction _transaction;
@@ -42,10 +27,46 @@ namespace Migrator.Framework
             Logger = LogManager.GetCurrentClassLogger();
         }
 
+        public IDbConnection Connection { get; protected set; }
+
         public abstract Dialect Dialect { get; }
 
         public Logger Logger { get; private set; }
 
+        /// <summary>
+        ///   The list of Migrations currently applied to the database.
+        /// </summary>
+        public List<long> AppliedMigrations
+        {
+            get
+            {
+                if (_appliedMigrations == null)
+                {
+                    _appliedMigrations = new List<long>();
+                    CreateSchemaInfoTable();
+
+                    string versionColumn = "Version";
+
+                    versionColumn = QuoteColumnNameIfRequired(versionColumn);
+
+                    using (IDataReader reader = Select(versionColumn, "SchemaInfo"))
+                    {
+                        while (reader.Read())
+                        {
+                            if (reader.GetFieldType(0) == typeof (Decimal))
+                            {
+                                _appliedMigrations.Add((long) reader.GetDecimal(0));
+                            }
+                            else
+                            {
+                                _appliedMigrations.Add(reader.GetInt64(0));
+                            }
+                        }
+                    }
+                }
+                return _appliedMigrations;
+            }
+        }
 
         #region Columns
 
@@ -119,11 +140,15 @@ namespace Migrator.Framework
         public virtual Column[] GetColumns(string table)
         {
             var columns = new List<Column>();
-            using (IDataReader reader = ExecuteQuery("select COLUMN_NAME, IS_NULLABLE from INFORMATION_SCHEMA.COLUMNS where table_name = '{0}'", table))
+            using (
+                IDataReader reader =
+                    ExecuteQuery(
+                        "select COLUMN_NAME, IS_NULLABLE from INFORMATION_SCHEMA.COLUMNS where table_name = '{0}'",
+                        table))
             {
                 while (reader.Read())
                 {
-                    var column = new Column(reader.GetString(0), DbType.String);
+                    Column column = new Column(reader.GetString(0), DbType.String);
                     string nullableStr = reader.GetString(1);
                     bool isNullable = nullableStr == "YES";
                     column.ColumnProperty |= isNullable ? ColumnProperty.Null : ColumnProperty.NotNull;
@@ -155,7 +180,7 @@ namespace Migrator.Framework
 
 
             var columnProviders = new List<ColumnPropertiesMapper>(columns.Length);
-            foreach (Column column in columns)
+            foreach (var column in columns)
             {
                 ColumnPropertiesMapper mapper = Dialect.GetAndMapColumnProperties(column);
                 columnProviders.Add(mapper);
@@ -190,7 +215,7 @@ namespace Migrator.Framework
             {
                 while (reader.Read())
                 {
-                    tables.Add((string)reader[0]);
+                    tables.Add((string) reader[0]);
                 }
             }
             return tables.ToArray();
@@ -211,7 +236,7 @@ namespace Migrator.Framework
 
         public string AddPrimaryKey(string tableName, string columnName)
         {
-            var name = string.Format("PK_{0}_{1}", tableName.ToUpper(), columnName.ToUpper());
+            string name = string.Format("PK_{0}_{1}", tableName.ToUpper(), columnName.ToUpper());
 
             if (ConstraintExists(tableName, name))
                 new ConstraintAlreadyExistsException(tableName, name);
@@ -223,7 +248,7 @@ namespace Migrator.Framework
 
         public string AddUniqueConstraint(string tableName, params string[] columns)
         {
-            var name = GetKeyName("UQ", tableName, columns);
+            string name = GetKeyName("UQ", tableName, columns);
 
             if (ConstraintExists(tableName, name))
                 new ConstraintAlreadyExistsException(tableName, name);
@@ -232,7 +257,8 @@ namespace Migrator.Framework
 
             tableName = QuoteTableNameIfRequired(tableName);
 
-            ExecuteNonQuery("ALTER TABLE {0} ADD CONSTRAINT {1} UNIQUE({2}) ", tableName, name, string.Join(", ", columns));
+            ExecuteNonQuery("ALTER TABLE {0} ADD CONSTRAINT {1} UNIQUE({2}) ", tableName, name,
+                            string.Join(", ", columns));
 
             return name;
         }
@@ -279,7 +305,10 @@ namespace Migrator.Framework
             if (!TableExists(tableName))
                 throw new TableDoesntExistsException(tableName);
 
-            return ExecuteStringQuery("SELECT CONSTRAINT_NAME FROM information_schema.table_constraints where table_name = '{0}'", tableName);
+            return
+                ExecuteStringQuery(
+                    "SELECT CONSTRAINT_NAME FROM information_schema.table_constraints where table_name = '{0}'",
+                    tableName);
         }
 
         public bool ConstraintExists(string tableName, string constraintName)
@@ -348,7 +377,7 @@ namespace Migrator.Framework
 
         public string AddIndex(string table, params string[] columns)
         {
-            var indexName = string.Format("IDX_{0}_{1}", table, string.Join("_ ", columns));
+            string indexName = string.Format("IDX_{0}_{1}", table, string.Join("_ ", columns));
 
             if (IndexExists(indexName, table))
                 throw new IndexAlreadyExistsException(table, indexName);
@@ -403,7 +432,7 @@ namespace Migrator.Framework
 
             string columnNames = string.Join(", ", columns.Select(QuoteColumnNameIfRequired).ToArray());
 
-            var builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
 
             for (int i = 0; i < values.Length; i++)
             {
@@ -429,7 +458,7 @@ namespace Migrator.Framework
 
                 int paramCount = 0;
 
-                foreach (string value in values)
+                foreach (var value in values)
                 {
                     IDbDataParameter parameter = command.CreateParameter();
 
@@ -453,7 +482,7 @@ namespace Migrator.Framework
                 return ExecuteNonQuery("DELETE FROM {0}", table);
             }
             return
-                ExecuteNonQuery("DELETE FROM {0} WHERE ({1})", table,JoinColumnsAndValues(columns, values));
+                ExecuteNonQuery("DELETE FROM {0} WHERE ({1})", table, JoinColumnsAndValues(columns, values));
         }
 
         public int DeleteData(string table, string wherecolumn, string wherevalue)
@@ -477,11 +506,11 @@ namespace Migrator.Framework
         }
 
         /// <summary>
-        /// Execute an SQL query returning results.
+        ///   Execute an SQL query returning results.
         /// </summary>
-        /// <param name="sql">The SQL command.</param>
+        /// <param name="sql"> The SQL command. </param>
         /// <param name="args"> </param>
-        /// <returns>A data iterator, <see cref="System.Data.IDataReader">IDataReader</see>.</returns>
+        /// <returns> A data iterator, <see cref="System.Data.IDataReader">IDataReader</see> . </returns>
         public IDataReader ExecuteQuery(string sql, params object[] args)
         {
             sql = string.Format(sql, args);
@@ -497,11 +526,11 @@ namespace Migrator.Framework
         {
             var values = new List<string>();
 
-            using (var reader = ExecuteQuery(sql, args))
+            using (IDataReader reader = ExecuteQuery(sql, args))
             {
                 while (reader.Read())
                 {
-                    var value = reader[0];
+                    object value = reader[0];
 
                     if (value == null || value == DBNull.Value)
                     {
@@ -553,7 +582,7 @@ namespace Migrator.Framework
         #region Transaction
 
         /// <summary>
-        /// Starts a transaction. Called by the migration mediator.
+        ///   Starts a transaction. Called by the migration mediator.
         /// </summary>
         public virtual void BeginTransaction()
         {
@@ -565,7 +594,7 @@ namespace Migrator.Framework
         }
 
         /// <summary>
-        /// Rollback the current migration. Called by the migration mediator.
+        ///   Rollback the current migration. Called by the migration mediator.
         /// </summary>
         public virtual void Rollback()
         {
@@ -584,7 +613,7 @@ namespace Migrator.Framework
         }
 
         /// <summary>
-        /// Commit the current transaction. Called by the migrations mediator.
+        ///   Commit the current transaction. Called by the migrations mediator.
         /// </summary>
         public virtual void Commit()
         {
@@ -605,55 +634,20 @@ namespace Migrator.Framework
         #endregion
 
         /// <summary>
-        /// The list of Migrations currently applied to the database.
+        ///   Marks a Migration version number as having been applied
         /// </summary>
-        public List<long> AppliedMigrations
-        {
-            get
-            {
-                if (_appliedMigrations == null)
-                {
-                    _appliedMigrations = new List<long>();
-                    CreateSchemaInfoTable();
-
-                    string versionColumn = "Version";
-
-                    versionColumn = QuoteColumnNameIfRequired(versionColumn);
-
-                    using (IDataReader reader = Select(versionColumn, "SchemaInfo"))
-                    {
-                        while (reader.Read())
-                        {
-                            if (reader.GetFieldType(0) == typeof(Decimal))
-                            {
-                                _appliedMigrations.Add((long)reader.GetDecimal(0));
-                            }
-                            else
-                            {
-                                _appliedMigrations.Add(reader.GetInt64(0));
-                            }
-                        }
-                    }
-                }
-                return _appliedMigrations;
-            }
-        }
-
-        /// <summary>
-        /// Marks a Migration version number as having been applied
-        /// </summary>
-        /// <param name="version">The version number of the migration that was applied</param>
+        /// <param name="version"> The version number of the migration that was applied </param>
         public void MigrationApplied(long version)
         {
             CreateSchemaInfoTable();
-            Insert("SchemaInfo", new[] { "Version" }, new[] { version.ToString() });
+            Insert("SchemaInfo", new[] {"Version"}, new[] {version.ToString()});
             _appliedMigrations.Add(version);
         }
 
         /// <summary>
-        /// Marks a Migration version number as having been rolled back from the database
+        ///   Marks a Migration version number as having been rolled back from the database
         /// </summary>
-        /// <param name="version">The version number of the migration that was removed</param>
+        /// <param name="version"> The version number of the migration that was removed </param>
         public void MigrationUnApplied(long version)
         {
             CreateSchemaInfoTable();
@@ -769,24 +763,24 @@ namespace Migrator.Framework
 
         private string QuoteValues(string values)
         {
-            return QuoteValues(new[] { values })[0];
+            return QuoteValues(new[] {values})[0];
         }
 
         private string[] QuoteValues(string[] values)
         {
             return Array.ConvertAll(values,
                                     delegate(string val)
-                                    {
-                                        if (null == val)
-                                            return "null";
-                                        else
-                                            return String.Format("'{0}'", val.Replace("'", "''"));
-                                    });
+                                        {
+                                            if (null == val)
+                                                return "null";
+                                            else
+                                                return String.Format("'{0}'", val.Replace("'", "''"));
+                                        });
         }
 
         private string JoinColumnsAndValues(string[] columns, string[] values)
         {
-            string[] quotedValues = QuoteValues(values);
+            var quotedValues = QuoteValues(values);
             var namesAndValues = new string[columns.Length];
             for (int i = 0; i < columns.Length; i++)
             {
@@ -810,7 +804,7 @@ namespace Migrator.Framework
             else if (value is Guid)
             {
                 parameter.DbType = DbType.Guid;
-                parameter.Value = (Guid)value;
+                parameter.Value = (Guid) value;
             }
             else if (value is Int32)
             {
@@ -847,12 +841,11 @@ namespace Migrator.Framework
 
         private void QuoteColumnNames(string[] primaryColumns)
         {
-            for (var i = 0; i < primaryColumns.Length; i++)
+            for (int i = 0; i < primaryColumns.Length; i++)
             {
                 primaryColumns[i] = QuoteColumnNameIfRequired(primaryColumns[i]);
             }
         }
-
 
 
         private static string GetKeyName(string prefix, string tableName, string[] Columns)
@@ -861,6 +854,4 @@ namespace Migrator.Framework
             return string.Format("{0}_{1}_{2}", prefix, tableName, string.Join("_", cols));
         }
     }
-
-
 }

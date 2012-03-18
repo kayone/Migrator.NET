@@ -2,7 +2,9 @@ namespace Migrator.Framework
 {
     public class ForeignKey
     {
-        public ForeignKey(string name, string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns, ForeignKeyConstraintType constraintType = ForeignKeyConstraintType.NoAction)
+        public ForeignKey(string name, string foreignTable, string[] foreignColumns, string primaryTable,
+                          string[] primaryColumns,
+                          ForeignKeyConstraintType constraintType = ForeignKeyConstraintType.NoAction)
         {
             Name = name;
             ForeignTable = foreignTable;
@@ -12,13 +14,15 @@ namespace Migrator.Framework
             ConstraintType = constraintType;
         }
 
-        public ForeignKey(string name, string foreignTable, string foreignColumn, string primaryTable, string primaryColumn, ForeignKeyConstraintType constraintType = ForeignKeyConstraintType.NoAction)
-            : this(name, foreignTable, new[] { foreignColumn }, primaryTable, new[] { primaryColumn }, constraintType)
+        public ForeignKey(string name, string foreignTable, string foreignColumn, string primaryTable,
+                          string primaryColumn,
+                          ForeignKeyConstraintType constraintType = ForeignKeyConstraintType.NoAction)
+            : this(name, foreignTable, new[] {foreignColumn}, primaryTable, new[] {primaryColumn}, constraintType)
         {
-
         }
 
-        public ForeignKey(string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns, ForeignKeyConstraintType constraintType = ForeignKeyConstraintType.NoAction)
+        public ForeignKey(string foreignTable, string[] foreignColumns, string primaryTable, string[] primaryColumns,
+                          ForeignKeyConstraintType constraintType = ForeignKeyConstraintType.NoAction)
         {
             Name = string.Format("FK_{0}_{1}", primaryTable, foreignTable);
             ForeignTable = foreignTable;
@@ -28,11 +32,11 @@ namespace Migrator.Framework
             ConstraintType = constraintType;
         }
 
-        public ForeignKey(string foreignTable, string foreignColumn, string primaryTable, string primaryColumn, ForeignKeyConstraintType constraintType = ForeignKeyConstraintType.NoAction)
-            : this(foreignTable, new[] { foreignColumn }, primaryTable, new[] { primaryColumn }, constraintType)
+        public ForeignKey(string foreignTable, string foreignColumn, string primaryTable, string primaryColumn,
+                          ForeignKeyConstraintType constraintType = ForeignKeyConstraintType.NoAction)
+            : this(foreignTable, new[] {foreignColumn}, primaryTable, new[] {primaryColumn}, constraintType)
         {
         }
-
 
 
         public string Name { get; private set; }

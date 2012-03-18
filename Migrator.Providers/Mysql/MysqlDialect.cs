@@ -74,9 +74,9 @@ namespace Migrator.Providers.Mysql
 
         public override string Default(object defaultValue)
         {
-            if (defaultValue.GetType().Equals(typeof(bool)))
+            if (defaultValue.GetType().Equals(typeof (bool)))
             {
-                defaultValue = ((bool)defaultValue) ? 1 : 0;
+                defaultValue = ((bool) defaultValue) ? 1 : 0;
             }
             return String.Format("DEFAULT {0}", defaultValue);
         }

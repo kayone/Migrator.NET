@@ -1,17 +1,3 @@
-#region License
-
-//The contents of this file are subject to the Mozilla Public License
-//Version 1.1 (the "License"); you may not use this file except in
-//compliance with the License. You may obtain a copy of the License at
-//http://www.mozilla.org/MPL/
-//Software distributed under the License is distributed on an "AS IS"
-//basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
-//License for the specific language governing rights and limitations
-//under the License.
-
-#endregion
-
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -21,7 +7,7 @@ using Migrator.Framework.Exceptions;
 namespace Migrator.Providers.SqlServer
 {
     /// <summary>
-    /// Migration transformations provider for Microsoft SQL Server.
+    ///   Migration transformations provider for Microsoft SQL Server.
     /// </summary>
     public class SqlServerTransformationProvider : TransformationProviderBase
     {
@@ -31,6 +17,11 @@ namespace Migrator.Providers.SqlServer
             : base(connectionString)
         {
             CreateConnection();
+        }
+
+        public override Dialect Dialect
+        {
+            get { return new SqlServerDialect(); }
         }
 
         protected virtual void CreateConnection()
@@ -61,11 +52,6 @@ namespace Migrator.Providers.SqlServer
             ExecuteNonQuery("EXEC sp_rename '{0}.{1}', '{2}', 'COLUMN'", tableName, oldColumnName, newColumnName);
         }
 
-        public override Dialect Dialect
-        {
-            get { return new SqlServerDialect(); }
-        }
-
         public override void RenameTable(string oldName, string newName)
         {
             if (TableExists(newName))
@@ -79,7 +65,7 @@ namespace Migrator.Providers.SqlServer
 
         // Deletes all constraints linked to a column. Sql Server
         // doesn't seems to do this.
-        void DeleteColumnConstraints(string table, string column)
+        private void DeleteColumnConstraints(string table, string column)
         {
             string sqlContrainte = FindConstraints(table, column);
             var constraints = new List<string>();
@@ -91,7 +77,7 @@ namespace Migrator.Providers.SqlServer
                 }
             }
             // Can't share the connection so two phase modif
-            foreach (string constraint in constraints)
+            foreach (var constraint in constraints)
             {
                 RemoveForeignKey(table, constraint);
             }

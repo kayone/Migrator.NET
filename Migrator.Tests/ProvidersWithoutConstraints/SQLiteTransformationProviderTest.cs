@@ -1,19 +1,3 @@
-#region License
-
-//The contents of this file are subject to the Mozilla Public License
-//Version 1.1 (the "License"); you may not use this file except in
-//compliance with the License. You may obtain a copy of the License at
-//http://www.mozilla.org/MPL/
-//Software distributed under the License is distributed on an "AS IS"
-//basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
-//License for the specific language governing rights and limitations
-//under the License.
-
-#endregion
-
-using System;
-using System.Configuration;
-using Migrator.Framework;
 using Migrator.Providers.SQLite;
 using NUnit.Framework;
 
@@ -55,8 +39,9 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void CanParseSqlDefinitions()
         {
-            const string testSql = "CREATE TABLE bar ( id INTEGER PRIMARY KEY AUTOINCREMENT, bar TEXT, baz INTEGER NOT NULL )";
-            string[] columns = _provider.ParseSqlColumnDefs(testSql);
+            const string testSql =
+                "CREATE TABLE bar ( id INTEGER PRIMARY KEY AUTOINCREMENT, bar TEXT, baz INTEGER NOT NULL )";
+            var columns = _provider.ParseSqlColumnDefs(testSql);
             Assert.IsNotNull(columns);
             Assert.AreEqual(3, columns.Length);
             Assert.AreEqual("id INTEGER PRIMARY KEY AUTOINCREMENT", columns[0]);
@@ -67,8 +52,9 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         [Test]
         public void CanParseSqlDefinitionsForColumnNames()
         {
-            const string testSql = "CREATE TABLE bar ( id INTEGER PRIMARY KEY AUTOINCREMENT, bar TEXT, baz INTEGER NOT NULL )";
-            string[] columns = _provider.ParseSqlForColumnNames(testSql);
+            const string testSql =
+                "CREATE TABLE bar ( id INTEGER PRIMARY KEY AUTOINCREMENT, bar TEXT, baz INTEGER NOT NULL )";
+            var columns = _provider.ParseSqlForColumnNames(testSql);
             Assert.IsNotNull(columns);
             Assert.AreEqual(3, columns.Length);
             Assert.AreEqual("id", columns[0]);

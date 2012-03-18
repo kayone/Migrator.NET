@@ -1,18 +1,17 @@
 using System.Data;
 using FluentAssertions;
 using Migrator.Framework;
-using Migrator.Providers;
 using Migrator.Tests.ProvidersWithoutConstraints;
 using NUnit.Framework;
 
 namespace Migrator.Tests.ProvidersWithConstraints
 {
     /// <summary>
-    /// Base class for Provider tests for all tests including constraint oriented tests.
+    ///   Base class for Provider tests for all tests including constraint oriented tests.
     /// </summary>
-    public abstract class TransformationProviderWithConstraintTestBase<TProvider> : TransformationProviderTestBase<TProvider> where TProvider : TransformationProviderBase
+    public abstract class TransformationProviderWithConstraintTestBase<TProvider> :
+        TransformationProviderTestBase<TProvider> where TProvider : TransformationProviderBase
     {
-
         private const string CustomersTableName = "Customers";
         private const string OrderTableName = "Orders";
 
@@ -27,8 +26,8 @@ namespace Migrator.Tests.ProvidersWithConstraints
                                NameColumn);
 
             _provider.AddTable(OrderTableName,
-                    new Column(OrderIdCol, DbType.Int32, ColumnProperty.PrimaryKeyWithIdentity),
-                    new Column(OrderForeignKey, DbType.Int32, ColumnProperty.NotNull));
+                               new Column(OrderIdCol, DbType.Int32, ColumnProperty.PrimaryKeyWithIdentity),
+                               new Column(OrderForeignKey, DbType.Int32, ColumnProperty.NotNull));
         }
 
 
@@ -36,7 +35,9 @@ namespace Migrator.Tests.ProvidersWithConstraints
         {
             GivenCustomersTables();
 
-            return _provider.AddForeignKey(new ForeignKey(OrderTableName, OrderForeignKey, CustomersTableName, CustomerIdCol)).Name;
+            return
+                _provider.AddForeignKey(new ForeignKey(OrderTableName, OrderForeignKey, CustomersTableName,
+                                                       CustomerIdCol)).Name;
         }
 
         private string AddPrimaryKey()
@@ -62,7 +63,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
         [Test]
         public void CanAddPrimaryKey()
         {
-            var name = AddPrimaryKey();
+            string name = AddPrimaryKey();
             _provider.PrimaryKeyExists(TestTableName, name).Should().BeTrue();
         }
 
@@ -74,11 +75,10 @@ namespace Migrator.Tests.ProvidersWithConstraints
         }
 
 
-
         [Test]
         public virtual void AddRemoveUniqueConstraint()
         {
-            var name = AddUniqueConstraint();
+            string name = AddUniqueConstraint();
             _provider.ConstraintExists(TestTableName, name).Should().BeTrue();
 
             _provider.RemoveConstraint(TestTableName, name);
@@ -88,7 +88,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
         [Test]
         public virtual void AddRemoveMultipleUniqueConstraint()
         {
-            var name = AddMultipleUniqueConstraint();
+            string name = AddMultipleUniqueConstraint();
             _provider.ConstraintExists(TestTableName, name).Should().BeTrue();
 
             _provider.RemoveConstraint(TestTableName, name);
@@ -98,7 +98,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
         [Test]
         public virtual void AddRemoveCheckConstraint()
         {
-            var name = AddCheckConstraint();
+            string name = AddCheckConstraint();
             _provider.ConstraintExists(TestTableName, name).Should().BeTrue();
 
             _provider.RemoveConstraint(TestTableName, name);
@@ -108,14 +108,12 @@ namespace Migrator.Tests.ProvidersWithConstraints
         [Test]
         public virtual void AddRemoveForeignKey()
         {
-            var name = AddForeignKey();
+            string name = AddForeignKey();
             _provider.ConstraintExists(OrderTableName, name).Should().BeTrue();
 
             _provider.RemoveForeignKey(OrderTableName, name);
             _provider.ConstraintExists(OrderTableName, name).Should().BeFalse();
         }
-
-   
 
 
         [Test]
