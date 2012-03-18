@@ -26,15 +26,13 @@ namespace Migrator.Tests
 		Migrator _migrator;
 
 		protected abstract TransformationProviderBase TransformationProvider { get; }
-		protected abstract string ConnectionString { get; }
-		protected abstract Assembly MigrationAssembly { get; }
 
 		[SetUp]
 		public void SetUp()
 		{
-			_migrator = new Migrator(TransformationProvider, MigrationAssembly, true);
+			_migrator = new Migrator(TransformationProvider);
 
-			Assert.IsTrue(_migrator.MigrationsTypes.Count > 0, "No migrations in assembly " + MigrationAssembly.Location);
+			Assert.IsTrue(_migrator.MigrationsTypes.Count > 0);
 
 			_migrator.MigrateTo(0);
 		}

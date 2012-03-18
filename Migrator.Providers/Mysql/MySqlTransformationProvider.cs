@@ -135,5 +135,11 @@ namespace Migrator.Providers.Mysql
         {
             return ExecuteStringQuery("SHOW DATABASES");
         }
+
+
+        public override ForeignKey AddForeignKey(ForeignKey foreignKey)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

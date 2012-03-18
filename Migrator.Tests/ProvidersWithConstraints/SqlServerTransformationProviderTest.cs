@@ -65,5 +65,13 @@ namespace Migrator.Tests.ProvidersWithConstraints
         {
             Assert.IsTrue(_provider.TableExists("[TestTable]"));
         }
+
+        [Test, Ignore("Not implemented yet")]
+        public override void RemoveColumnWithDefault()
+        {
+            base.AddRemoveForeignKey();
+        }
+
+   
     }
 }

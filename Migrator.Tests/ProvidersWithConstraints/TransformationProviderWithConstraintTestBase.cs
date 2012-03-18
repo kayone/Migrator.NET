@@ -51,7 +51,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
 
         private string AddMultipleUniqueConstraint()
         {
-            return _provider.AddUniqueConstraint(TestTableName, NameColumn.Name, BinColumn.Name);
+            return _provider.AddUniqueConstraint(TestTableName, NameColumn.Name, TitleColumn.Name);
         }
 
         private string AddCheckConstraint()
@@ -106,7 +106,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
         }
 
         [Test]
-        public void AddRemoveForeignKey()
+        public virtual void AddRemoveForeignKey()
         {
             var name = AddForeignKey();
             _provider.ConstraintExists(OrderTableName, name).Should().BeTrue();
@@ -119,7 +119,7 @@ namespace Migrator.Tests.ProvidersWithConstraints
 
 
         [Test]
-        public void RemoveUnexistingForeignKey()
+        public virtual void RemoveUnexistingForeignKey()
         {
             AddForeignKey();
             _provider.RemoveForeignKey("abc", "FK_Test_TestTwo");

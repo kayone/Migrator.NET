@@ -297,7 +297,7 @@ namespace Migrator.Tests.ProvidersWithoutConstraints
         }
 
         [Test]
-        public void RemoveColumnWithDefault()
+        public virtual void RemoveColumnWithDefault()
         {
             AddColumnWithDefault();
             _provider.RemoveColumn(TestTableName, "TestWithDefault");
